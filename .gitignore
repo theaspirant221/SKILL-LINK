@@ -1,0 +1,28 @@
+# Node
+node_modules/
+dist/
+.vite/
+
+# Java
+backend/target/
+*.class
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv/
+
+# Local secrets and state
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# App data
+*.sqlite
+coverage/
