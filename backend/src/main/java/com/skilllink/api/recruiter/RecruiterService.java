@@ -47,6 +47,25 @@ public class RecruiterService {
     }
 
     public List<RecruiterDtos.ApplicationResponse> candidateApplications(UUID candidateId) { return jdbc.query("SELECT ja.id FROM job_application ja WHERE ja.candidate_id = ? ORDER BY ja.created_at DESC", (rs, rowNum) -> rs.getObject("id", UUID.class), candidateId).stream().map(this::application).toList(); }
+
+    public List<RecruiterDtos.CandidateProofContractResponse> candidateContracts(UUID candidateId) {
+        return jdbc.query("SELECT pc.id FROM proof_contract pc WHERE pc.candidate_id = ? AND pc.status <> 'ARCHIVED' ORDER BY pc.created_at DESC", (rs, rowNum) -> rs.getObject("id", UUID.class), candidateId).stream().map(id -> candidateContract(candidateId, id)).toList();
+    }
+
+    private RecruiterDtos.CandidateProofContractResponse candidateContract(UUID candidateId, UUID contractId) {
+        CandidateContractRow row = jdbc.queryForObject("""
+            SELECT pc.id, pc.job_id, j.title job_title, o.name company, pc.version, pc.status, pc.created_at
+            FROM proof_contract pc JOIN job j ON j.id = pc.job_id JOIN organization o ON o.id = j.organization_id
+            WHERE pc.id = ? AND pc.candidate_id = ?
+            """, (rs, rowNum) -> new CandidateContractRow(rs.getObject("id", UUID.class), rs.getObject("job_id", UUID.class), rs.getString("job_title"), rs.getString("company"), rs.getInt("version"), rs.getString("status"), instant(rs, "created_at")), contractId, candidateId);
+        List<RecruiterDtos.CandidateContractRequirementResponse> requirements = jdbc.query("""
+            SELECT pcr.id, jr.skill_id, s.name skill_name, jr.kind, pcr.outcome, pcr.proof_summary, pcr.evidence_count, pcr.reviewed_at
+            FROM proof_contract_requirement pcr JOIN job_requirement jr ON jr.id = pcr.job_requirement_id JOIN skill s ON s.id = jr.skill_id
+            WHERE pcr.contract_id = ? ORDER BY jr.kind, s.name
+            """, (rs, rowNum) -> new RecruiterDtos.CandidateContractRequirementResponse(rs.getObject("id", UUID.class), rs.getObject("skill_id", UUID.class), rs.getString("skill_name"), rs.getString("kind"), rs.getString("outcome"), rs.getString("proof_summary"), rs.getInt("evidence_count"), instant(rs, "reviewed_at")), contractId);
+        return new RecruiterDtos.CandidateProofContractResponse(row.id(), row.jobId(), row.jobTitle(), row.company(), row.version(), row.status(), row.createdAt(), requirements);
+    }
+
     public List<RecruiterDtos.ApplicationResponse> recruiterApplications(UUID recruiterId, UUID jobId) { getOwnedJob(recruiterId, jobId); return jdbc.query("SELECT ja.id FROM job_application ja WHERE ja.job_id = ? ORDER BY ja.created_at DESC", (rs, rowNum) -> rs.getObject("id", UUID.class), jobId).stream().map(this::application).toList(); }
 
     @Transactional
@@ -133,6 +152,7 @@ public class RecruiterService {
     private record JobRow(UUID id, UUID createdBy, String company, String title, String location, String description, String status, Instant createdAt) {}
     private record ApplicationRow(UUID id, UUID jobId, UUID candidateId, String candidateName, String jobTitle, String status, String note, Instant createdAt) {}
     private record ContractRow(UUID id, UUID jobId, UUID candidateId, int version, String status, Instant createdAt) {}
+    private record CandidateContractRow(UUID id, UUID jobId, String jobTitle, String company, int version, String status, Instant createdAt) {}
     private record ContractOwner(UUID jobId, UUID candidateId) {}
     private record RequirementFacts(UUID requirementId, UUID skillId, String skillName, String kind, String outcome, String summary, int evidenceCount, UUID verificationResultId) {}
     public static class RecruiterNotFoundException extends RuntimeException { private final String code; public RecruiterNotFoundException(String code, String message) { super(message); this.code = code; } public String code() { return code; } }

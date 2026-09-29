@@ -25,12 +25,19 @@
 - real frontend auth, GitHub connection, analysis polling, evidence, skills, examiner, passport, recruiter jobs/contracts; offline fixture remains clearly separated
 - automated tests for auth/API contracts, worker orchestration, deterministic analysis, secret redaction, and mocked GitHub snapshot fetching
 
+### Phase 2 candidate market slice
+
+- candidate job discovery page (server-backed mode) listing open roles with normalized taxonomy requirement previews
+- candidate applications with an optional note, persisted application history, and recruiter-owned status display
+- `GET /candidates/me/proof-contracts`: a dedicated candidate-facing Proof Contract projection that shows shared requirement outcomes and summaries while never exposing recruiter reviewer notes or reviewer identity (covered by a WebMvcTest contract test)
+- public verification page resolves real public passport identifiers via `GET /public/passports/{identifier}` in server-backed mode, with explicit loading/not-available states; the offline fixture rendering is unchanged
+- API client tests pin the candidate endpoint request/response envelope and structured error propagation
+
 ## Next coherent implementation slice
 
 1. add Testcontainers/PostgreSQL CI coverage once a Docker-enabled runner is available
 2. add provider HTTP client/reference validation and prompt execution telemetry
 3. add isolated practical execution service with no network/host mounts
 4. add cursor pagination, notification delivery, retention/deletion jobs, and richer dispute resolution
-5. add candidate job discovery/application UI and candidate view of shared Proof Contracts
-6. add institution/admin membership workflows and signed/verifiable credential export
-7. strengthen GitHub webhook/re-analysis freshness and rate-limit handling
+5. add institution/admin membership workflows and signed/verifiable credential export
+6. strengthen GitHub webhook/re-analysis freshness and rate-limit handling

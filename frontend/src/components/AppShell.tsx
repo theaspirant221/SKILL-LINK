@@ -1,27 +1,31 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Activity, Bell, BookOpenCheck, BriefcaseBusiness, ChevronDown, ChevronRight, CircleHelp, Code2, FileCheck2, Fingerprint, GitBranch, GraduationCap, LayoutDashboard, Menu, Network, Plus, Search, Settings2, ShieldCheck, Sparkles, Users, X } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useStore } from '../store';
 import { isDemoMode } from '../api/client';
 import { Logo } from './ui';
 import type { UserRole } from '../domain';
 
-const candidateNav = [
+type NavItemSpec = { label: string; to: string; icon: LucideIcon; badge?: string; serverOnly?: boolean };
+
+const candidateNav: NavItemSpec[] = [
   { label: 'Overview', to: '/app', icon: LayoutDashboard },
   { label: 'Projects', to: '/app/projects', icon: Code2 },
   { label: 'Evidence', to: '/app/evidence', icon: FileCheck2 },
   { label: 'Skills', to: '/app/skills', icon: Network },
+  { label: 'Jobs', to: '/app/jobs', icon: BriefcaseBusiness, serverOnly: true },
   { label: 'AI Examiner', to: '/app/examiner', icon: Sparkles, badge: 'Live' },
   { label: 'Proof Passport', to: '/app/passport', icon: Fingerprint },
 ];
 
-const recruiterNav = [
+const recruiterNav: NavItemSpec[] = [
   { label: 'Overview', to: '/recruiter', icon: LayoutDashboard },
   { label: 'Jobs & proof contracts', to: '/recruiter/jobs', icon: BriefcaseBusiness },
   { label: 'Candidate proof', to: '/recruiter/candidate', icon: Users },
 ];
 
-function NavItem({ item, onNavigate }: { item: (typeof candidateNav)[number]; onNavigate: () => void }) {
+function NavItem({ item, onNavigate }: { item: NavItemSpec; onNavigate: () => void }) {
   const Icon = item.icon;
   return <NavLink to={item.to} end={item.to === '/app' || item.to === '/recruiter'} onClick={onNavigate} className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}><Icon size={17} strokeWidth={1.8} /><span>{item.label}</span>{item.badge && <span className="nav-badge">{item.badge}</span>}</NavLink>;
 }
@@ -32,8 +36,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const isRecruiter = role === 'recruiter' || location.pathname.startsWith('/recruiter');
-  const nav = isRecruiter ? recruiterNav : candidateNav;
-  const pageName = location.pathname.includes('examiner') ? 'AI Examiner' : location.pathname.includes('evidence') ? 'Evidence' : location.pathname.includes('skills') ? 'Skills' : location.pathname.includes('passport') ? 'Proof Passport' : location.pathname.includes('projects') ? 'Projects' : location.pathname.includes('jobs') ? 'Jobs & proof contracts' : location.pathname.includes('candidate') ? 'Candidate proof' : 'Overview';
+  const nav = (isRecruiter ? recruiterNav : candidateNav).filter((item) => !item.serverOnly || !isDemoMode);
+  const pageName = location.pathname.includes('examiner') ? 'AI Examiner' : location.pathname.includes('evidence') ? 'Evidence' : location.pathname.includes('skills') ? 'Skills' : location.pathname === '/app/jobs' ? 'Jobs' : location.pathname.includes('passport') ? 'Proof Passport' : location.pathname.includes('projects') ? 'Projects' : location.pathname.includes('jobs') ? 'Jobs & proof contracts' : location.pathname.includes('candidate') ? 'Candidate proof' : 'Overview';
 
   function changeRole(next: UserRole) {
     setRole(next);

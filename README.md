@@ -21,7 +21,8 @@ Set `VITE_DEMO_MODE=false` to use the real React/API path. The current backend s
 - bounded practical text-patch challenge with reviewer-owned `PASSED`/`NEEDS_CHANGES` outcomes
 - versioned policy evaluation requiring completed repository evidence, a passed project defense, and a reviewed practical result before `VERIFIED`
 - recruiter job creation with controlled-taxonomy requirement extraction, applications, status review, and requirement-by-requirement Proof Contracts
-- private/public-summary Proof Passport issuance containing only policy-verified skills; public DTOs exclude source code and source locations
+- candidate job discovery with normalized requirement previews, applications with optional notes, application history, and a privacy-safe candidate view of shared Proof Contracts that never includes recruiter reviewer notes
+- private/public-summary Proof Passport issuance containing only policy-verified skills; public DTOs exclude source code and source locations, and the public verification page resolves real public identifiers
 - optional FastAPI structured-output AI boundary; the policy engine remains the only writer of verified status
 
 ## Run locally
@@ -83,7 +84,7 @@ cd frontend && npm run build && npm test -- --run
 cd backend && ./mvnw -B test
 ```
 
-The backend tests cover auth error/cookie behavior, deterministic analysis, secret redaction, mocked GitHub commit/tree/blob snapshot fetching, worker state transitions, and health/API contracts.
+The backend tests cover auth error/cookie behavior, deterministic analysis, secret redaction, mocked GitHub commit/tree/blob snapshot fetching, worker state transitions, health/API contracts, and the candidate Proof Contract projection (including that reviewer notes are never exposed). The frontend tests cover the offline fixture contract and the candidate API client request/response envelope.
 
 ## Real proof loop
 
@@ -96,5 +97,6 @@ The backend tests cover auth error/cookie behavior, deterministic analysis, secr
 7. A recruiter with an application reviews the submission; only then can policy evaluation produce `VERIFIED`.
 8. Issue a private Proof Passport or explicitly change its visibility.
 9. A recruiter creates a job, receives an application, generates a Proof Contract, and reviews each requirement.
+10. From the candidate Jobs page, discover open roles, apply with an optional note, and inspect the shared Proof Contract without reviewer notes.
 
 See `docs/local-development.md`, `docs/api-overview.md`, `docs/verification-model.md`, and `docs/security-model.md` for boundaries and operating assumptions.

@@ -39,6 +39,10 @@ public class RecruiterController {
     @PreAuthorize("hasRole('CANDIDATE')")
     public List<RecruiterDtos.ApplicationResponse> candidateApplications(@AuthenticationPrincipal SkillLinkPrincipal principal) { return recruiter.candidateApplications(principal.id()); }
 
+    @GetMapping("/candidates/me/proof-contracts")
+    @PreAuthorize("hasRole('CANDIDATE')")
+    public List<RecruiterDtos.CandidateProofContractResponse> candidateContracts(@AuthenticationPrincipal SkillLinkPrincipal principal) { return recruiter.candidateContracts(principal.id()); }
+
     @GetMapping("/recruiter/jobs/{jobId}/applications")
     @PreAuthorize("hasRole('RECRUITER')")
     public List<RecruiterDtos.ApplicationResponse> recruiterApplications(@AuthenticationPrincipal SkillLinkPrincipal principal, @PathVariable UUID jobId) { return recruiter.recruiterApplications(principal.id(), jobId); }
