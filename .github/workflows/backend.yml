@@ -60,3 +60,11 @@ jobs:
             exit "$status"
           fi
           echo "::notice title=system Maven passed::Tests pass with system Maven; the failure above is wrapper-specific. $(grep -h 'Tests run:' /tmp/mvn-system.log | tail -n 3 | tr '\n' ' ' | head -c 160)"
+      # Full surefire reports as an artifact so failures can be analyzed without raw logs.
+      - name: Upload surefire reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend/target/surefire-reports/
+          if-no-files-found: ignore
