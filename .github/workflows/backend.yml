@@ -43,7 +43,9 @@ jobs:
             echo "::error title=Maven tests failed::exit=$status $summary"
             exit "$status"
           fi
-          echo "::notice title=Maven tests passed::$(grep -h 'Tests run:' /tmp/mvn.log | tail -n 3 | tr '\n' ' ' | head -c 220)"
+          total="$(grep -h 'Tests run:' /tmp/mvn.log | tail -n 1 | head -c 110)"
+          integration="$(grep -h 'Tests run:.*AuthenticationFlowIntegrationTest' /tmp/mvn.log | head -c 130)"
+          echo "::notice title=Maven tests passed::${total} | ${integration}"
       # Diagnostic fallback: proves whether a failure is wrapper-specific or a real test failure.
       - name: Fallback diagnostics via system Maven
         if: failure()
