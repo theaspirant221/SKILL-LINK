@@ -6,6 +6,10 @@ on:
   pull_request:
     paths: ['backend/**']
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -44,8 +48,43 @@ jobs:
             exit "$status"
           fi
           total="$(grep -h 'Tests run:' /tmp/mvn.log | tail -n 1 | head -c 110)"
-          integration="$(grep -h 'Tests run:.*AuthenticationFlowIntegrationTest' /tmp/mvn.log | head -c 130)"
+          integration="$(grep -h 'Tests run:.*IntegrationTest' /tmp/mvn.log | tr '\n' ';' | head -c 300)"
           echo "::notice title=Maven tests passed::${total} | ${integration}"
+      # Raw logs and artifact downloads can be unavailable; publish per-test failure details
+      # (assertion messages, chunked to the 245-char annotation limit) on a dedicated check run.
+      - name: Publish failure details
+        if: failure()
+        run: |
+          python3 - <<'EOF'
+          import glob, json, os, re, subprocess
+
+          details = []
+          for path in sorted(glob.glob('target/surefire-reports/*.txt')):
+              text = open(path, encoding='utf-8', errors='replace').read()
+              cls = os.path.basename(path).replace('.txt', '')
+              for block in text.split('<<< FAILURE!')[1:] + text.split('<<< ERROR!')[1:]:
+                  lines = [line.strip() for line in block.strip().split('\n') if line.strip()][:4]
+                  message = ' | '.join(lines)[:240]
+                  details.append({'path': path, 'title': cls[:100], 'message': message})
+          if not details:
+              raise SystemExit(0)
+          annotations = [{'path': d['path'], 'start_line': 1, 'end_line': 1, 'annotation_level': 'failure',
+                          'title': d['title'], 'message': d['message']} for d in details[:50]]
+          payload = {
+              'name': 'failure-details',
+              'head_sha': os.environ['GITHUB_SHA'],
+              'status': 'completed',
+              'conclusion': 'failure',
+              'output': {'title': 'Per-test failure details', 'summary': f'{len(details)} failing test(s); details in annotations.',
+                         'annotations': annotations},
+          }
+          subprocess.run(['gh', 'api', '--method', 'POST', f"repos/{os.environ['GITHUB_REPOSITORY']}/check-runs",
+                          '--header', 'Content-Type: application/json', '--input', '-'],
+                         input=json.dumps(payload), text=True, check=True)
+          print(f'published {len(annotations)} failure annotations')
+          EOF
+        env:
+          GH_TOKEN: ${{ github.token }}
       # Diagnostic fallback: proves whether a failure is wrapper-specific or a real test failure.
       - name: Fallback diagnostics via system Maven
         if: failure()
@@ -60,7 +99,7 @@ jobs:
             exit "$status"
           fi
           echo "::notice title=system Maven passed::Tests pass with system Maven; the failure above is wrapper-specific. $(grep -h 'Tests run:' /tmp/mvn-system.log | tail -n 3 | tr '\n' ' ' | head -c 160)"
-      # Full surefire reports as an artifact so failures can be analyzed without raw logs.
+      # Full surefire reports as an artifact (when downloadable) for deeper analysis.
       - name: Upload surefire reports
         if: failure()
         uses: actions/upload-artifact@v4
