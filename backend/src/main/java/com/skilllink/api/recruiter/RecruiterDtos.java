@@ -17,4 +17,8 @@ public final class RecruiterDtos {
     public record ContractRequirementResponse(UUID contractRequirementId, UUID jobRequirementId, UUID skillId, String skillName, String requiredKind, String outcome, String proofSummary, int visibleEvidenceCount, UUID verificationResultId, String reviewerNote, Instant reviewedAt) {}
     public record ProofContractResponse(UUID contractId, UUID jobId, UUID candidateId, int version, String status, Instant createdAt, List<ContractRequirementResponse> requirements) {}
     public record ContractReviewRequest(@NotBlank String outcome, String reviewerNote) {}
+    // Candidate-facing projection of a shared Proof Contract. Deliberately omits recruiter reviewer notes and
+    // reviewer identity so candidates can inspect what was shared without exposing reviewer-private context.
+    public record CandidateContractRequirementResponse(UUID contractRequirementId, UUID skillId, String skillName, String requiredKind, String outcome, String proofSummary, int visibleEvidenceCount, Instant reviewedAt) {}
+    public record CandidateProofContractResponse(UUID contractId, UUID jobId, String jobTitle, String company, int version, String status, Instant createdAt, List<CandidateContractRequirementResponse> requirements) {}
 }

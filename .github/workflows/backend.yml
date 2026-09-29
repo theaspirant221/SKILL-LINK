@@ -19,4 +19,44 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - run: mvn -B test
+      # The wrapper is the intended entry point (also verifies backend/mvnw is executable).
+      # Failures are mirrored into check annotations so the root cause is visible without raw logs.
+      - name: Wrapper sanity check
+        run: |
+          set +e
+          ./mvnw -B --version 2>&1 | tee /tmp/wrapper-version.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary="$(tail -n 8 /tmp/wrapper-version.log | tr '\n' ' ' | head -c 220)"
+            echo "::error title=mvnw wrapper failed::exit=$status $summary"
+            exit "$status"
+          fi
+          echo "::notice title=mvnw wrapper ok::$(grep -m 3 -E 'Apache Maven|Java version|Maven home' /tmp/wrapper-version.log | tr '\n' ' ' | head -c 220)"
+      - name: Run tests via wrapper
+        run: |
+          set +e
+          ./mvnw -B test 2>&1 | tee /tmp/mvn.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary="$(grep -m 5 -E '^\[ERROR\]|Error: |BUILD FAILURE' /tmp/mvn.log | tr '\n' ' ' | head -c 220)"
+            [ -n "$summary" ] || summary="$(tail -n 8 /tmp/mvn.log | tr '\n' ' ' | head -c 220)"
+            echo "::error title=Maven tests failed::exit=$status $summary"
+            exit "$status"
+          fi
+          total="$(grep -h 'Tests run:' /tmp/mvn.log | tail -n 1 | head -c 110)"
+          integration="$(grep -h 'Tests run:.*AuthenticationFlowIntegrationTest' /tmp/mvn.log | head -c 130)"
+          echo "::notice title=Maven tests passed::${total} | ${integration}"
+      # Diagnostic fallback: proves whether a failure is wrapper-specific or a real test failure.
+      - name: Fallback diagnostics via system Maven
+        if: failure()
+        run: |
+          set +e
+          mvn -B test 2>&1 | tee /tmp/mvn-system.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            summary="$(grep -m 5 -E '^\[ERROR\]|Error: |BUILD FAILURE' /tmp/mvn-system.log | tr '\n' ' ' | head -c 220)"
+            [ -n "$summary" ] || summary="$(tail -n 8 /tmp/mvn-system.log | tr '\n' ' ' | head -c 220)"
+            echo "::error title=system Maven also failed::exit=$status $summary"
+            exit "$status"
+          fi
+          echo "::notice title=system Maven passed::Tests pass with system Maven; the failure above is wrapper-specific. $(grep -h 'Tests run:' /tmp/mvn-system.log | tail -n 3 | tr '\n' ' ' | head -c 160)"

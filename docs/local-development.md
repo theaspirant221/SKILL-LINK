@@ -27,6 +27,7 @@ export DATABASE_URL=jdbc:postgresql://localhost:5432/skilllink
 export DATABASE_USERNAME=skilllink
 export DATABASE_PASSWORD=change-me
 export JWT_SECRET=<base64-encoded-long-random-secret>
+export TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)
 ./mvnw -B spring-boot:run
 ```
 
@@ -77,7 +78,7 @@ cd ../backend
 JAVA_HOME=/path/to/jdk-21 ./mvnw -B test
 ```
 
-Backend tests include mocked GitHub commit/tree/blob snapshot fetching, limits/redaction, deterministic analyzer signals, worker orchestration, health, and auth refresh/logout error contracts.
+Backend tests include mocked GitHub commit/tree/blob snapshot fetching, limits/redaction, deterministic analyzer signals, worker orchestration, health, and auth refresh/logout error contracts. `AuthenticationFlowIntegrationTest` starts its own PostgreSQL container (Testcontainers) and verifies the full authentication loop — registration, login, JWT access, `/me`, refresh rotation, RBAC, and logout/revocation — over real HTTP. It is skipped automatically when Docker is not available; test-only JWT/encryption fixtures come from `backend/src/test/resources/application-test.yml`, so `./mvnw -B test` needs no extra environment variables.
 
 ## Preview environment notes
 

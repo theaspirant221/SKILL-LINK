@@ -18,7 +18,7 @@ Errors use this envelope:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| POST | `/auth/register` | create a candidate or recruiter account |
+| POST | `/auth/register` | create a candidate account; recruiter access is provisioned server-side |
 | POST | `/auth/login` | issue access + refresh session |
 | POST | `/auth/refresh` | rotate a non-revoked refresh session |
 | POST | `/auth/logout` | revoke the presented refresh session and expire the cookie |
@@ -50,6 +50,7 @@ Errors use this envelope:
 | POST | `/candidates/me/challenges/{challengeId}/submissions` | submit a text/patch explanation for review |
 | GET | `/candidates/me/verifications` | immutable policy evaluation history |
 | POST | `/candidates/me/verifications/skills/{skillId}/evaluate` | evaluate explicit policy gates; never an AI-only decision |
+| GET | `/candidates/me/proof-contracts` | candidate view of Proof Contracts shared for their applications; excludes recruiter reviewer notes |
 | GET | `/candidates/me/passport` | private passport and verified items |
 | POST | `/candidates/me/passport/issue` | issue/refresh only after a verified result exists |
 | PATCH | `/candidates/me/passport/visibility` | private, public summary, or public |
@@ -73,7 +74,7 @@ A defense can produce `PASSED`, but it cannot independently write `VERIFIED`. A 
 | PATCH | `/recruiter/proof-contracts/{contractId}/requirements/{requirementId}` | human review of one requirement |
 | POST | `/recruiter/challenge-submissions/{submissionId}/review` | reviewer-owned practical outcome |
 
-Proof Contract rows contain normalized requirements, outcome, policy-backed summary, and only recruiter-visible evidence counts. They do not expose private source code or raw source locations.
+Proof Contract rows contain normalized requirements, outcome, policy-backed summary, and only recruiter-visible evidence counts. They do not expose private source code or raw source locations. The candidate-facing contract view (`GET /candidates/me/proof-contracts`) is a dedicated projection: it shows the same requirement outcomes and summaries so candidates can audit what was shared, but it never includes recruiter reviewer notes or reviewer identity.
 
 ## Public proof
 

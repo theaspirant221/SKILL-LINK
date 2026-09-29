@@ -15,6 +15,8 @@ export type RecruiterJob = { jobId: string; title: string; company: string; loca
 export type Application = { applicationId: string; jobId: string; candidateId: string; candidateDisplayName: string; jobTitle: string; status: string; note: string | null; createdAt: string };
 export type ContractRequirement = { contractRequirementId: string; jobRequirementId: string; skillId: string; skillName: string; requiredKind: string; outcome: string; proofSummary: string; visibleEvidenceCount: number; verificationResultId: string | null; reviewerNote: string | null; reviewedAt: string | null };
 export type ProofContract = { contractId: string; jobId: string; candidateId: string; version: number; status: string; createdAt: string; requirements: ContractRequirement[] };
+export type CandidateContractRequirement = { contractRequirementId: string; skillId: string; skillName: string; requiredKind: string; outcome: string; proofSummary: string; visibleEvidenceCount: number; reviewedAt: string | null };
+export type CandidateProofContract = { contractId: string; jobId: string; jobTitle: string; company: string; version: number; status: string; createdAt: string; requirements: CandidateContractRequirement[] };
 export type PassportItem = { skillId: string; skillName: string; category: string; status: string; policyVersion: string | null; displaySummary: string; verifiedAt: string | null };
 export type Passport = { passportId: string; publicIdentifier: string; candidateId: string; visibility: string; issuedAt: string; expiresAt: string | null; revoked: boolean; items: PassportItem[] };
 export type PublicPassport = { publicIdentifier: string; candidateDisplayName: string; visibility: string; issuedAt: string; expiresAt: string | null; items: PassportItem[] };
@@ -63,7 +65,7 @@ async function request<T>(path: string, init: RequestInit = {}, allowRefresh = t
 
 export const api = {
   auth: {
-    register: (body: { email: string; password: string; displayName: string; role?: 'CANDIDATE' | 'RECRUITER' }) => request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(body) }).then((data) => { setAccessToken(data.accessToken); return data; }),
+    register: (body: { email: string; password: string; displayName: string }) => request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(body) }).then((data) => { setAccessToken(data.accessToken); return data; }),
     login: (body: { email: string; password: string }) => request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(body) }).then((data) => { setAccessToken(data.accessToken); return data; }),
     me: () => request<ApiUser>('/auth/me'),
     logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }).finally(() => setAccessToken(null)),
@@ -84,6 +86,12 @@ export const api = {
     evidence: (projectId: string) => request<ApiEvidence[]>(`/projects/${projectId}/evidence`),
   },
   skills: { mine: () => request<ApiSkill[]>('/candidates/me/skills') },
+  candidate: {
+    openJobs: () => request<RecruiterJob[]>('/jobs'),
+    apply: (jobId: string, note?: string) => request<Application>(`/jobs/${encodeURIComponent(jobId)}/applications`, { method: 'POST', body: JSON.stringify({ note: note?.trim() ? note.trim() : null }) }),
+    applications: () => request<Application[]>('/candidates/me/applications'),
+    proofContracts: () => request<CandidateProofContract[]>('/candidates/me/proof-contracts'),
+  },
   evidence: {
     dispute: (evidenceId: string, reason: string) => request<void>(`/evidence/${evidenceId}/dispute`, { method: 'POST', body: JSON.stringify({ reason }) }),
     visibility: (evidenceId: string, visibility: string) => request<void>(`/evidence/${evidenceId}/visibility`, { method: 'PATCH', body: JSON.stringify({ visibility }) }),

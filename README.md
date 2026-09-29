@@ -21,7 +21,8 @@ Set `VITE_DEMO_MODE=false` to use the real React/API path. The current backend s
 - bounded practical text-patch challenge with reviewer-owned `PASSED`/`NEEDS_CHANGES` outcomes
 - versioned policy evaluation requiring completed repository evidence, a passed project defense, and a reviewed practical result before `VERIFIED`
 - recruiter job creation with controlled-taxonomy requirement extraction, applications, status review, and requirement-by-requirement Proof Contracts
-- private/public-summary Proof Passport issuance containing only policy-verified skills; public DTOs exclude source code and source locations
+- candidate job discovery with normalized requirement previews, applications with optional notes, application history, and a privacy-safe candidate view of shared Proof Contracts that never includes recruiter reviewer notes
+- private/public-summary Proof Passport issuance containing only policy-verified skills; public DTOs exclude source code and source locations, and the public verification page resolves real public identifiers
 - optional FastAPI structured-output AI boundary; the policy engine remains the only writer of verified status
 
 ## Run locally
@@ -43,8 +44,9 @@ export JAVA_HOME=/path/to/jdk-21
 export DATABASE_URL=jdbc:postgresql://localhost:5432/skilllink
 export DATABASE_USERNAME=skilllink
 export DATABASE_PASSWORD=change-me
-# base64-encoded secret; replace in real environments
-export JWT_SECRET=c2tpbGxsaW5rLWxvY2FsLXNlY3JldC1jaGFuZ2UtYmVmb3JlLXByb2R1Y3Rpb24tcGxlYXNlLXZlcnktbG9uZw==
+# base64-encoded secrets; replace in real environments
+export JWT_SECRET=$(openssl rand -base64 32)
+export TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)
 ./mvnw spring-boot:run
 ```
 
@@ -83,7 +85,7 @@ cd frontend && npm run build && npm test -- --run
 cd backend && ./mvnw -B test
 ```
 
-The backend tests cover auth error/cookie behavior, deterministic analysis, secret redaction, mocked GitHub commit/tree/blob snapshot fetching, worker state transitions, and health/API contracts.
+The backend tests cover auth error/cookie behavior, deterministic analysis, secret redaction, mocked GitHub commit/tree/blob snapshot fetching, worker state transitions, health/API contracts, and the candidate Proof Contract projection (including that reviewer notes are never exposed). `AuthenticationFlowIntegrationTest` additionally verifies the real authentication loop — registration, login, JWT access, `/me`, refresh rotation with reuse rejection, RBAC in both directions, and logout/revocation — over real HTTP against a Flyway-migrated PostgreSQL instance started by Testcontainers; it is skipped automatically when Docker is not available (as on GitHub Actions runners, where it runs). Test-only JWT/encryption fixtures live in `backend/src/test/resources/application-test.yml`; runtime secrets still must come from the environment. The frontend tests cover the offline fixture contract and the candidate API client request/response envelope.
 
 ## Real proof loop
 
@@ -96,5 +98,6 @@ The backend tests cover auth error/cookie behavior, deterministic analysis, secr
 7. A recruiter with an application reviews the submission; only then can policy evaluation produce `VERIFIED`.
 8. Issue a private Proof Passport or explicitly change its visibility.
 9. A recruiter creates a job, receives an application, generates a Proof Contract, and reviews each requirement.
+10. From the candidate Jobs page, discover open roles, apply with an optional note, and inspect the shared Proof Contract without reviewer notes.
 
 See `docs/local-development.md`, `docs/api-overview.md`, `docs/verification-model.md`, and `docs/security-model.md` for boundaries and operating assumptions.
