@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Activity, Bell, BookOpenCheck, BriefcaseBusiness, ChevronDown, ChevronRight, CircleHelp, Code2, FileCheck2, Fingerprint, GitBranch, GraduationCap, LayoutDashboard, Menu, Network, Plus, Search, Settings2, ShieldCheck, Sparkles, Users, X } from 'lucide-react';
+import { Activity, Bell, BookOpenCheck, BriefcaseBusiness, ChevronDown, ChevronRight, CircleHelp, Code2, FileCheck2, Fingerprint, GitBranch, Github, GraduationCap, LayoutDashboard, Menu, Network, Plus, Search, Settings2, ShieldCheck, Sparkles, Users, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useStore } from '../store';
 import { isDemoMode } from '../api/client';
@@ -12,6 +12,7 @@ type NavItemSpec = { label: string; to: string; icon: LucideIcon; badge?: string
 const candidateNav: NavItemSpec[] = [
   { label: 'Overview', to: '/app', icon: LayoutDashboard },
   { label: 'Projects', to: '/app/projects', icon: Code2 },
+  { label: 'GitHub', to: '/app/github', icon: Github, serverOnly: true },
   { label: 'Evidence', to: '/app/evidence', icon: FileCheck2 },
   { label: 'Skills', to: '/app/skills', icon: Network },
   { label: 'Jobs', to: '/app/jobs', icon: BriefcaseBusiness, serverOnly: true },
@@ -37,7 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const isRecruiter = role === 'recruiter' || location.pathname.startsWith('/recruiter');
   const nav = (isRecruiter ? recruiterNav : candidateNav).filter((item) => !item.serverOnly || !isDemoMode);
-  const pageName = location.pathname.includes('examiner') ? 'AI Examiner' : location.pathname.includes('evidence') ? 'Evidence' : location.pathname.includes('skills') ? 'Skills' : location.pathname === '/app/jobs' ? 'Jobs' : location.pathname.includes('passport') ? 'Proof Passport' : location.pathname.includes('projects') ? 'Projects' : location.pathname.includes('jobs') ? 'Jobs & proof contracts' : location.pathname.includes('candidate') ? 'Candidate proof' : 'Overview';
+  const pageName = location.pathname.includes('examiner') ? 'AI Examiner' : location.pathname.includes('evidence') ? 'Evidence' : location.pathname.includes('skills') ? 'Skills' : location.pathname === '/app/jobs' ? 'Jobs' : location.pathname === '/app/github' ? 'GitHub' : location.pathname.includes('passport') ? 'Proof Passport' : location.pathname.includes('projects') ? 'Projects' : location.pathname.includes('jobs') ? 'Jobs & proof contracts' : location.pathname.includes('candidate') ? 'Candidate proof' : 'Overview';
 
   function changeRole(next: UserRole) {
     setRole(next);
@@ -53,7 +54,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="sidebar-scroll">
         <div className="nav-group"><div className="nav-group-label">{isRecruiter ? 'Hiring workspace' : 'Proof workspace'}</div>{nav.map((item) => <NavItem key={item.to} item={item} onNavigate={() => setMobileOpen(false)} />)}</div>
         <div className="nav-group nav-group-secondary"><div className="nav-group-label">Workspace</div>
-          {!isRecruiter && <NavLink to="/app/projects" className="nav-item" onClick={() => setMobileOpen(false)}><GitBranch size={17} strokeWidth={1.8} /><span>GitHub source</span><span className="nav-status-dot" /></NavLink>}
+          {!isRecruiter && <NavLink to={isDemoMode ? '/app/projects' : '/app/github'} className="nav-item" onClick={() => setMobileOpen(false)}><GitBranch size={17} strokeWidth={1.8} /><span>GitHub source</span><span className="nav-status-dot" /></NavLink>}
           {isRecruiter && <NavLink to="/recruiter/jobs" className="nav-item" onClick={() => setMobileOpen(false)}><BookOpenCheck size={17} strokeWidth={1.8} /><span>Proof contracts</span></NavLink>}
           <div className="nav-item nav-item-static"><Bell size={17} strokeWidth={1.8} /><span>Notifications</span><span className="nav-muted-label">{isDemoMode ? 'demo' : 'quiet'}</span></div>
         </div>

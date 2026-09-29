@@ -6,3 +6,12 @@ skilllink:
     jwt-secret: c2tpbGxsaW5rLWl0LWp3dC1zaWduaW5nLWtleS0zMi1ieXRlcy1vayE=
     # base64("skilllink-it-encryption-key-32!!") - exactly 32 bytes for AES-256/GCM
     encryption-key: c2tpbGxsaW5rLWl0LWVuY3J5cHRpb24ta2V5LTMyISE=
+  github:
+    # Test-only GitHub App fixtures; no real credentials. The private key is a throwaway
+    # 2048-bit RSA key generated for this repository's test suite (single-line env style).
+    app-id: "123456"
+    client-id: Iv1.skilllink-test
+    client-secret: test-client-secret
+    app-name: skilllink-test-app
+    webhook-secret: it-test-webhook-secret
+    private-key: "-----BEGIN PRIVATE KEY-----MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDQHZlRUhlP6oP3\nSSqfBrpXR3NHeh5UX6E4z2ypHDJg0SF/gNwBqf2JhlxFe0TFOrIJbF28wOFSd6b9\ndLx/bgxYj8TKlNlT8qUxM/eF1aFGuPTne/WQn680VjN95Hzlbe84Dcdkm5l4++Fj\nbV6eKw+xiXOX3DbrhDHd3aatk1bQTguq+ogaSZWfW+v44wdCByBrxjGqNZ23s1OH\nTjtiqZ7amnzt+va3HAVa449t5FIrJvXL5fbk52fNhYBeQszMhY1TgzMbLnSi9PuB\n2YX9X0nWTuZT9Tmc8UnKoytzhO0mnxC9TgRxd+q4g1lJdFw4pI8aoLXzrf4zs4b/\nVqRrup6dAgMBAAECggEAH7LlHOVP31kdk5yh23SyDO7gSK/5jv69Nu16eVbxohyI\nfnwOm/RGnrFdPDoL3gH+3H+UgYEGxkGyU42kfmuxLAtt59tR2j8DA/e3M7vieOay\nwCV54Ew/lU2slyLRFpMEP6SdonMu0PuF4i07nwTOZaDFf152llsyyz6ND4gkeM1R\nZ0VVGrQIdpUHymYErJ2rmje6+ABkQjcgJLVQkrL1VxwWtZPJarSkYbnnRTbxY62q\ny9Yj8IfqMxHyT2JID4zsGND1zQxc1Q8Hr1/FIlSXqYPI4CjPEUsjsOXwP9Ih8geE\nluKL812RAt2Vawj0o8FAGly7UEoXkQDsI4K36KFm8wKBgQDt2Uzb/9uvKIEYS4r8\nGSOj7/N//+xVkMy0Begmf5grkQTK2ymiz4/TLlZa5e6SZrU5JCZgVLByK/vaD/UY\nGclOqte0tFnb1YjSqRWqgx0nsRrSVmNx2TTrRq7IGgVkJYkjNb2vuhTTfO64Ccy1\nF1yAnRL/ccQrRKl8PqTUCqUd8wKBgQDf/2uKFmhu9fNxBRHvUV2oLaejeiYFVWHo\n9qBhRKdV+P2WOxX7ReR7xJFisu2d4cgUBqKM0nYbMIfBQnYe5JdQvdWvwJ3CxPiz\nUsabAYIUyimVT4C6iHV9MxlPVKq//SMcaZWvwbab99+X+Gw+ipKmn1DuqrSQ1FRY\nzHYKRRIlLwKBgQCF9k4D2yewj++l72ZodwBL5WoQPeSujM++1VTb2iGq6BL67lWV\nDbLEDuU0bSzh6FdJx8KVnx2CMKO5PiOdX2iylibH8Ixr9OkLPZCmaRKSuH2S2nVI\nOj5EBZuLuJwwu7Nx0WL1BqmUNFl/7oUNugqvpch9d2Y1uIZ9JAtSImy9YQKBgFiB\njNVQC02kot8KWM7NwIreFznx3qoG1Zv+LtqgDNpcep5slD/nmuMIhUWRW3AhsTOw\nd3PbCM2vfERxZUjJm7xMde1u1ycJOxdn4o+GpgZe5tVXR47ssjeZBCwjUSBw/fmR\nApMioGu6Ij/i6apAiLeLhaf4DUaYjwdTKmTea9ADAoGBAOF62ubVKt3tve6ta8NB\nExWMmWSg1cOSbfSbpESzdQAFHhe0UG2Jnv7Ch2Uv7ilf92ub5C6/VSGzVREiQdJ6\nQLn/bGUkVVKwa9LC3g88EibbCLKSwtAgZf/2QibgwQlcgEZ+axPznckktMYb0Elo\nnB9YUtd6dQtvyI4qU2XVwCyj-----END PRIVATE KEY-----"

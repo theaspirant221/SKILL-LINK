@@ -36,7 +36,7 @@ Useful local URLs:
 - `GET http://localhost:8080/api/v1/health`
 - `GET http://localhost:8080/actuator/health`
 
-GitHub is intentionally not required to boot. Configure `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and a callback matching `GITHUB_REDIRECT_URI` before selecting a real repository. Missing configuration returns a structured error; there is no fallback to demo repositories.
+GitHub is intentionally not required to boot. Configure the SkillLink GitHub App variables (`GITHUB_APP_ID`, `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_NAME`, `GITHUB_CALLBACK_URL`, `GITHUB_SETUP_URL`, `GITHUB_WEBHOOK_SECRET`; see `docs/github-app-setup.md`) before connecting a real account. Missing configuration returns a structured error; there is no fallback to demo repositories.
 
 ## Start the frontend
 
@@ -78,7 +78,7 @@ cd ../backend
 JAVA_HOME=/path/to/jdk-21 ./mvnw -B test
 ```
 
-Backend tests include mocked GitHub commit/tree/blob snapshot fetching, limits/redaction, deterministic analyzer signals, worker orchestration, health, and auth refresh/logout error contracts. `AuthenticationFlowIntegrationTest` starts its own PostgreSQL container (Testcontainers) and verifies the full authentication loop — registration, login, JWT access, `/me`, refresh rotation, RBAC, and logout/revocation — over real HTTP. It is skipped automatically when Docker is not available; test-only JWT/encryption fixtures come from `backend/src/test/resources/application-test.yml`, so `./mvnw -B test` needs no extra environment variables.
+Backend tests include mocked GitHub commit/tree/blob snapshot fetching, limits/redaction, deterministic analyzer signals, worker orchestration, health, and auth refresh/logout error contracts. `AuthenticationFlowIntegrationTest` starts its own PostgreSQL container (Testcontainers) and verifies the full authentication loop — registration, login, JWT access, `/me`, refresh rotation, RBAC, and logout/revocation — over real HTTP. The GitHub App integration tests (`GithubAppConnectionIntegrationTest`, `GithubWebhookIntegrationTest`) use the same harness with the GitHub HTTP clients mocked: state validation/replay, PKCE, installation linking, encrypted token persistence, disconnect revocation, webhook signatures, and repository-removal handling all run against a real database and security chain. Integration tests are skipped automatically when Docker is not available; test-only JWT/encryption/GitHub App fixtures come from `backend/src/test/resources/application-test.yml`, so `./mvnw -B test` needs no extra environment variables.
 
 ## Preview environment notes
 

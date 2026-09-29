@@ -40,7 +40,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(errors -> errors.authenticationEntryPoint(jsonAuthenticationEntryPoint()).accessDeniedHandler(jsonAccessDeniedHandler()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/health", "/api/v1/health", "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout", "/api/v1/github/callback", "/api/v1/public/**", "/error").permitAll()
+                .requestMatchers("/actuator/health", "/api/v1/health", "/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout", "/api/v1/github/callback", "/api/v1/github/install/callback", "/api/v1/github/webhooks", "/api/v1/public/**", "/error").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

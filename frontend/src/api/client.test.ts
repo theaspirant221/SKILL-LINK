@@ -11,6 +11,32 @@ describe('candidate API client', () => {
   beforeEach(() => { fetchMock.mockReset(); vi.stubGlobal('fetch', fetchMock); setAccessToken('token-1'); });
   afterEach(() => { vi.unstubAllGlobals(); setAccessToken(null); });
 
+  it('starts the GitHub App install flow through the backend-generated URL', () => {
+    expect(api.github.installUrl()).toBe('/api/v1/github/install');
+    expect(api.github.connectUrl()).toBe('/api/v1/github/connect');
+  });
+
+  it('loads the server-computed GitHub connection status', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ status: 'CONNECTED', connected: true, githubLogin: 'octocat', githubUserId: 9001, scopes: '', connectedAt: '2026-09-29T10:00:00Z', lastValidatedAt: '2026-09-29T10:00:00Z', installation: { installationId: 42, accountId: 5001, accountLogin: 'acme-org', accountType: 'Organization', repositorySelection: 'SELECTED', status: 'ACTIVE' } }));
+    const status = await api.github.status();
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/github/status');
+    expect(status.status).toBe('CONNECTED');
+    expect(status.installation?.accountLogin).toBe('acme-org');
+  });
+
+  it('lists GitHub repositories available through the installation and disconnects explicitly', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse([]));
+    await api.github.repositories();
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/github/repositories');
+
+    fetchMock.mockResolvedValueOnce(jsonResponse(undefined, 204));
+    await api.github.disconnect();
+    const [url, init] = fetchMock.mock.calls[1];
+    expect(url).toBe('/api/v1/github/connection');
+    expect(init.method).toBe('DELETE');
+  });
+
   it('registers a candidate without any client-supplied role field', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ accessToken: 'token-2', accessTokenExpiresInSeconds: 900, user: { id: 'u1', email: 'it@example.com', displayName: 'It Candidate', role: 'CANDIDATE' } }));
     const response = await api.auth.register({ email: 'it@example.com', password: 'correct-horse-battery', displayName: 'It Candidate' });
