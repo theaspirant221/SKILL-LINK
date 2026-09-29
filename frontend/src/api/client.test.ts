@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError, setAccessToken } from './client';
+import { api, ApiError, getAccessToken, setAccessToken } from './client';
 
 function jsonResponse(body: unknown, status = 200) {
   return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(JSON.stringify(body)), json: () => Promise.resolve(body) };
@@ -10,6 +10,17 @@ const fetchMock = vi.fn();
 describe('candidate API client', () => {
   beforeEach(() => { fetchMock.mockReset(); vi.stubGlobal('fetch', fetchMock); setAccessToken('token-1'); });
   afterEach(() => { vi.unstubAllGlobals(); setAccessToken(null); });
+
+  it('registers a candidate without any client-supplied role field', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ accessToken: 'token-2', accessTokenExpiresInSeconds: 900, user: { id: 'u1', email: 'it@example.com', displayName: 'It Candidate', role: 'CANDIDATE' } }));
+    const response = await api.auth.register({ email: 'it@example.com', password: 'correct-horse-battery', displayName: 'It Candidate' });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/auth/register');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ email: 'it@example.com', password: 'correct-horse-battery', displayName: 'It Candidate' });
+    expect(response.user.role).toBe('CANDIDATE');
+    expect(getAccessToken()).toBe('token-2');
+  });
 
   it('lists open jobs with an authenticated GET /jobs', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse([]));

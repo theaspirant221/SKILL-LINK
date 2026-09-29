@@ -85,7 +85,7 @@ cd frontend && npm run build && npm test -- --run
 cd backend && ./mvnw -B test
 ```
 
-The backend tests cover auth error/cookie behavior, deterministic analysis, secret redaction, mocked GitHub commit/tree/blob snapshot fetching, worker state transitions, health/API contracts, and the candidate Proof Contract projection (including that reviewer notes are never exposed). The frontend tests cover the offline fixture contract and the candidate API client request/response envelope.
+The backend tests cover auth error/cookie behavior, deterministic analysis, secret redaction, mocked GitHub commit/tree/blob snapshot fetching, worker state transitions, health/API contracts, and the candidate Proof Contract projection (including that reviewer notes are never exposed). `AuthenticationFlowIntegrationTest` additionally verifies the real authentication loop — registration, login, JWT access, `/me`, refresh rotation with reuse rejection, RBAC in both directions, and logout/revocation — over real HTTP against a Flyway-migrated PostgreSQL instance started by Testcontainers; it is skipped automatically when Docker is not available (as on GitHub Actions runners, where it runs). Test-only JWT/encryption fixtures live in `backend/src/test/resources/application-test.yml`; runtime secrets still must come from the environment. The frontend tests cover the offline fixture contract and the candidate API client request/response envelope.
 
 ## Real proof loop
 

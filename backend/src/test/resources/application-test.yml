@@ -1,0 +1,8 @@
+# Test-profile fixtures only. Production and local runtime must provide real secrets
+# via JWT_SECRET / TOKEN_ENCRYPTION_KEY (see application.yml and .env.example).
+skilllink:
+  security:
+    # base64("skilllink-it-jwt-signing-key-32-bytes-ok!") - 41 bytes, HMAC-SHA256 minimum is 32
+    jwt-secret: c2tpbGxsaW5rLWl0LWp3dC1zaWduaW5nLWtleS0zMi1ieXRlcy1vayE=
+    # base64("skilllink-it-encryption-key-32!!") - exactly 32 bytes for AES-256/GCM
+    encryption-key: c2tpbGxsaW5rLWl0LWVuY3J5cHRpb24ta2V5LTMyISE=

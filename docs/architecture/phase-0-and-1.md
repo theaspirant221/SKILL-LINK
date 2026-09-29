@@ -33,6 +33,14 @@
 - public verification page resolves real public passport identifiers via `GET /public/passports/{identifier}` in server-backed mode, with explicit loading/not-available states; the offline fixture rendering is unchanged
 - API client tests pin the candidate endpoint request/response envelope and structured error propagation
 
+### Checkpoint A/B hardening and verification
+
+- registration always creates candidate accounts; recruiter access is provisioned server-side, and the API client no longer sends a role field
+- runtime secrets (`JWT_SECRET`, `TOKEN_ENCRYPTION_KEY`) have no committed defaults; `application-test.yml` carries explicit test-only fixtures
+- structured error envelopes for malformed bodies, unknown routes, and unsupported methods
+- `backend/mvnw` executable mode restored, and backend CI now runs through the wrapper
+- `AuthenticationFlowIntegrationTest` (Testcontainers PostgreSQL, real HTTP) verifies registration, login, JWT access, `/me`, refresh rotation with revocation of superseded tokens, RBAC in both directions, logout/revocation, and the structured error contract; it skips automatically without Docker
+
 ## Next coherent implementation slice
 
 1. add Testcontainers/PostgreSQL CI coverage once a Docker-enabled runner is available

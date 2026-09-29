@@ -19,4 +19,5 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - run: mvn -B test
+      # Uses the Maven wrapper deliberately: this also verifies that backend/mvnw is executable.
+      - run: ./mvnw -B test
