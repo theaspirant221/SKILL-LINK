@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { challenge as fixtureChallenge, examination as fixtureExam, initialState } from './fixtures';
 import type { DemoState, Job, JobRequirement, SkillStatus } from './domain';
+import { api, getAccessToken, isDemoMode } from './api/client';
 
 const STORAGE_KEY = 'skilllink-demo-state-v1';
 
@@ -20,6 +21,7 @@ type Store = DemoState & {
 const StoreContext = createContext<Store | null>(null);
 
 function loadState(): DemoState {
+  if (!isDemoMode) return { ...initialState, signedIn: false };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return initialState;
@@ -67,14 +69,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DemoState>(loadState);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (isDemoMode) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
+
+  useEffect(() => {
+    if (isDemoMode) return;
+    let active = true;
+    api.auth.me().then((user) => {
+      if (!active) return;
+      setState((current) => ({ ...current, signedIn: true, role: user.role === 'RECRUITER' ? 'recruiter' : 'candidate', candidate: { ...current.candidate, name: user.displayName, initials: user.displayName.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase() } }));
+    }).catch(() => { if (active && !getAccessToken()) setState((current) => ({ ...current, signedIn: false })); });
+    return () => { active = false; };
+  }, []);
 
   const signIn = useCallback((role: 'candidate' | 'recruiter' = 'candidate') => {
     setState((current) => ({ ...current, signedIn: true, role }));
   }, []);
 
   const signOut = useCallback(() => {
+    if (!isDemoMode) void api.auth.logout();
     setState((current) => ({ ...current, signedIn: false }));
   }, []);
 

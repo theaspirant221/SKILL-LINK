@@ -1,24 +1,26 @@
 package com.skilllink.api;
 
+import com.skilllink.api.auth.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.flywaydb.autoconfigure.FlywayAutoConfiguration"
-})
+@WebMvcTest(controllers = HealthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class HealthControllerTest {
-    @LocalServerPort int port;
-    @Autowired TestRestTemplate rest;
+    @Autowired MockMvc mockMvc;
+    @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
-    void healthIsReachable() {
-        var response = rest.getForEntity("http://localhost:" + port + "/api/v1/health", String.class);
-        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(response.getBody()).contains("skilllink-api");
+    void healthIsReachable() throws Exception {
+        mockMvc.perform(get("/api/v1/health"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("skilllink-api")));
     }
 }

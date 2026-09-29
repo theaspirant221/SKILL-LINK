@@ -48,9 +48,10 @@ POST /projects/{id}/analysis
   -> secret scan and redaction
   -> deterministic language/dependency/AST passes
   -> select relevant context
-  -> provider adapter with schema and prompt version
-  -> validate every reference
-  -> persist evidence + AIExecution metadata
+  -> persist deterministic evidence + normalized skills
+  -> optional grounded provider adapter with schema/prompt version
+  -> validate every provider reference before use
+  -> policy-owned examination/practical/verification flow
   -> publish notification
 ```
 

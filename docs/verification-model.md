@@ -3,63 +3,51 @@
 ## Statuses
 
 - `SELF_CLAIM`: user-declared, no accepted evidence yet
-- `EVIDENCE_FOUND`: source-backed observations exist
-- `PARTIAL`: some policy gates are met, others are open
+- `EVIDENCE_FOUND`: completed source-backed observations exist
+- `PARTIAL`: some independent policy gates are met, others remain open
 - `VERIFIED`: all required policy gates pass and no material contradiction is unresolved
 - `STALE` / `EXPIRED`: previous result needs refresh
 - `NOT_VERIFIED`: no accepted path or failed gates
-- `DISPUTED`: candidate or reviewer has an open dispute that affects trust
+- `DISPUTED`: an open dispute affects trust
 
-## Policy inputs
+## Active baseline policy
 
-```text
-repository evidence
-+ evidence provenance and snapshot
-+ project-specific defense
-+ bounded practical task
-+ contribution evidence where relevant
-+ skill-specific policy version
-+ freshness policy
-+ unresolved disputes / contradictions
-```
-
-An LLM can propose a grounded evaluation for an answer or generate a challenge. It cannot write `VERIFIED` directly. The deterministic policy engine combines explicit inputs.
-
-## Example policy: JWT Authentication v0.1
+The applied Flyway seed is `skill-proof-baseline:v1.0`. Its rule set is stored in `verification_policy.rules` and the result stores the policy row/version used.
 
 ```text
-EVIDENCE_FOUND:
-  at least 2 direct/strong implementation observations
+repository gate:
+  at least one evidence item attached to a COMPLETED repository snapshot
 
-PARTIAL:
-  evidence found + defense meets bar OR practical task passes
+project defense gate:
+  at least one project examination for that candidate/skill has result PASSED
+
+practical gate:
+  at least one practical challenge submission for that candidate/skill has been
+  explicitly reviewed by an authorized recruiter and has status PASSED
 
 VERIFIED:
-  at least 2 direct/strong observations
-  AND defense result = PASSED
-  AND practical result = PASSED
-  AND no unresolved material dispute
-  AND snapshot/policy metadata recorded
+  repository gate AND project defense gate AND practical gate
+
+PARTIAL:
+  repository gate AND exactly one of the independent gates
+
+NOT_VERIFIED:
+  repository gate is missing, or neither independent gate passes
 ```
 
-A future policy may weight security skills differently from a language skill. Policies are versioned and stored so a result can be reconstructed later.
+The initial policy is intentionally conservative about authority: repository analysis and a candidate answer cannot directly mark a skill verified. `VerificationService` is the only application path that updates `candidate_skill` to `VERIFIED`, and it records an immutable `verification_result` with explanation, policy version, snapshot/examination/challenge references, and evaluator metadata.
+
+## Evidence provenance
+
+Evidence must point to an immutable repository snapshot, commit, source location, source hash where available, observation, strength, and visibility. Disputed observations are excluded from policy gates. Raw source stays private by default; recruiter-visible counts are computed from explicit visibility grants.
 
 ## Examiner evaluation
 
-The examiner evaluates:
-
-- code navigation: can the candidate locate the implementation?
-- understanding: can they explain the flow?
-- reasoning: can they explain a trade-off?
-- debugging: can they isolate a failure?
-- modification: can they propose a bounded change?
-- consistency: does the answer align with the snapshot?
-
-Do not use keyword presence as the production evaluator. The demo uses a small deterministic rubric only to keep the offline loop explorable; the production contract requires grounded structured output, a rubric, model/provider metadata, and a review path.
+The current server-backed examiner generates up to three questions from persisted evidence references. It stores a prompt version, policy version, source context, answer text, evaluator metadata, and a deterministic bounded rubric. It requires the answer to reference supplied project context and include concrete reasoning or validation. This rubric is a safe local boundary, not an assertion that an LLM has understood the code. The optional FastAPI AI contract is schema/grounding constrained and cannot write verification status.
 
 ## Practical verification
 
-Challenges are bounded and project-specific. Initial text/patch submissions can become isolated container execution later. Production sandbox requirements:
+A challenge is created only for a skill with completed source evidence. The current execution mode is `TEXT_PATCH`: a candidate submits a bounded implementation explanation, stored with a content hash and `REVIEW_REQUIRED`. A recruiter who owns a job application from that candidate can record `PASSED`, `NEEDS_CHANGES`, or `REVIEW_REQUIRED`. Isolated execution is the next provider boundary and must include:
 
 - no production-network access
 - ephemeral filesystem and branch
@@ -70,12 +58,10 @@ Challenges are bounded and project-specific. Initial text/patch submissions can 
 - static checks and test result capture
 - deletion after retention period
 
-Record files inspected, changes, tests, final result, and explanation where the execution model allows it.
+## Freshness and disputes
 
-## Freshness
-
-Each result stores `lastVerifiedAt`, `latestEvidenceAt`, `freshnessState`, `refreshRequiredAt`, and the policy that calculated it. Skill category rules are configurable. A stale result remains historical evidence but should not silently appear as current proof.
+Every candidate skill stores latest evidence time, last verified time, freshness state, refresh deadline, and policy version. Every verification decision is append-only. Evidence disputes change the evidence status and are visible in audit history; they do not silently disappear.
 
 ## Human responsibility
 
-Recruiters see proof rows and can request more proof. SkillLink does not recommend hire/reject, infer protected attributes, or replace recruiter judgment.
+Recruiters see proof rows and can request more proof. SkillLink does not recommend hire/reject, infer protected attributes, or replace recruiter judgment. Proof Contracts are structured decision support, not an automatic hiring decision.

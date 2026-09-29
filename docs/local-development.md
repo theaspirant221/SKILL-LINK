@@ -1,51 +1,60 @@
 # Local development
 
-## Working preview
+## Prerequisites
 
-The current working slice is the React app. It is safe to run without credentials:
-
-```bash
-cd SKILL-LINK
-npm install
-npm run dev
-```
-
-Vite binds to `0.0.0.0` for the Arena preview. The browser demo stores its workspace in local storage. Use **Reset demo workspace** in the sidebar to clear it.
-
-## Backend prerequisites
-
-The production-oriented API expects:
-
+- Node.js 20+
 - Java 21
-- Maven 3.9+
 - PostgreSQL 16+
-- Redis 7+ when queue/rate-limit features are enabled
+- Maven wrapper included for the backend
 - optional Python 3.11+ for the AI engine
+- Docker only when using Compose; Docker was unavailable in the build sandbox
 
-The supplied sandbox used for this build has Node.js and Java 11 but does not include Maven or Docker, so the Java build and container boot were not run here. The frontend build was run successfully.
-
-## Spring API
-
-```bash
-cd SKILL-LINK/backend
-cp ../.env.example .env
-mvn spring-boot:run
-```
-
-Flyway validates the schema on startup. The default security config is intentionally strict; configure a real JWT/OAuth issuer before connecting a frontend.
-
-## Database
-
-With PostgreSQL available:
+## Start PostgreSQL
 
 ```sql
 CREATE USER skilllink PASSWORD 'change-me';
 CREATE DATABASE skilllink OWNER skilllink;
 ```
 
-Then set `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD`.
+Or run `infrastructure/docker-compose.yml` in an environment with Docker. The backend applies Flyway V1–V3 automatically.
 
-## AI engine
+## Start the backend
+
+```bash
+cd SKILL-LINK/backend
+export JAVA_HOME=/path/to/jdk-21
+export DATABASE_URL=jdbc:postgresql://localhost:5432/skilllink
+export DATABASE_USERNAME=skilllink
+export DATABASE_PASSWORD=change-me
+export JWT_SECRET=<base64-encoded-long-random-secret>
+./mvnw -B spring-boot:run
+```
+
+Useful local URLs:
+
+- `GET http://localhost:8080/api/v1/health`
+- `GET http://localhost:8080/actuator/health`
+
+GitHub is intentionally not required to boot. Configure `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and a callback matching `GITHUB_REDIRECT_URI` before selecting a real repository. Missing configuration returns a structured error; there is no fallback to demo repositories.
+
+## Start the frontend
+
+The Vite dev server proxies `/api` to `VITE_BACKEND_URL` and binds to `0.0.0.0` for preview environments.
+
+```bash
+cd SKILL-LINK/frontend
+npm install
+cat > .env.local <<'EOF'
+VITE_DEMO_MODE=false
+VITE_API_BASE_URL=/api/v1
+VITE_BACKEND_URL=http://localhost:8080
+EOF
+npm run dev -- --host 0.0.0.0
+```
+
+Use `VITE_DEMO_MODE=true` (or omit the file) for the explicitly labeled offline fixture. Demo state is local browser state. Server-backed state is never synthesized by the real pages.
+
+## Optional AI engine
 
 ```bash
 cd SKILL-LINK/ai-engine
@@ -55,19 +64,24 @@ pip install -e '.[test]'
 uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-The current app is a contract-safe local implementation. Provider credentials are not required and no live model calls occur.
+The FastAPI service exposes schema-validated `/v1/analyze` and `/v1/examiner/questions` contracts. It accepts deterministic, redacted context and returns references; it cannot mark a skill verified. The Spring application defaults to the disabled provider boundary.
 
-## Docker Compose
+## Verification commands
 
-`infrastructure/docker-compose.yml` starts PostgreSQL, Redis, and the optional AI engine. Docker was not available in the build sandbox, so run it in a local environment with Docker installed.
+```bash
+cd frontend
+npm run build
+npm test -- --run
 
-## Production wiring checklist
+cd ../backend
+JAVA_HOME=/path/to/jdk-21 ./mvnw -B test
+```
 
-- configure GitHub OAuth callback and minimum scopes
-- implement JWT issuer/refresh rotation
-- add repository snapshot worker and secret redaction
-- wire Spring jobs to a queue
-- replace demo client adapter with `/api/v1` TanStack Query calls
-- add object storage and retention jobs
-- run backend migrations and integration tests
-- enable SAST, secret scan, dependency audit, and container scanning
+Backend tests include mocked GitHub commit/tree/blob snapshot fetching, limits/redaction, deterministic analyzer signals, worker orchestration, health, and auth refresh/logout error contracts.
+
+## Preview environment notes
+
+- bind servers to `0.0.0.0`
+- use relative browser API paths; do not call `localhost` from browser code
+- set `SKILLLINK_WEB_ORIGIN` and GitHub redirect URLs to the preview origin for OAuth
+- the file viewer iframe has no network access; use the live Vite preview for API-backed behavior

@@ -4,34 +4,33 @@
 
 ### Phase 0 foundation
 
-- monorepo layout with `frontend`, `backend`, `ai-engine`, `docs`, `infrastructure`, and `scripts`
-- dark/light-ready visual tokens and responsive accessible primitives
-- React routing, candidate/recruiter shells, public verifier
-- explicit demo adapter state with local persistence and reset
-- Spring Boot 3 / Java 21 foundation, security boundary, health endpoint, Flyway migration
-- normalized schema for users, projects, snapshots, skills, evidence, examination, challenges, verification, jobs, passports, disputes, audit, notifications
-- AI engine schema contracts and grounding rules
-- docs covering architecture, model, security, API, database, local development
+- monorepo with `frontend`, `backend`, `ai-engine`, `docs`, and `infrastructure`
+- responsive evidence-oriented UI tokens and semantic loading/empty/error states
+- React routing with an explicitly labeled offline adapter and a separate server-backed path
+- Spring Boot 3 / Java 21 modular monolith, PostgreSQL/Flyway, Security/JWT boundary, and structured errors
+- normalized schema for identity, projects, snapshots, skills, evidence, examinations, challenges, verification, jobs, applications, contracts, passports, disputes, and audit
+- optional grounded AI provider interface plus FastAPI schema contracts
+- product, architecture, evidence, verification, database, security, AI, API, local-development, and QA docs
 
 ### Phase 1 proof engine slice
 
-- offline GitHub fixture connection is clearly labeled and non-deceptive
-- repository analysis progresses through real local job states: connected, processing, completed
-- evidence cards point to file paths and immutable commit `abc1234`
-- normalized skills and living proof chain
-- project-specific examiner with code-location, architecture, and security questions
-- practical role-authorization task with bounded local rubric
-- verification state updates only after defense/practical gates
-- public/private passport surfaces and recruiter proof review
-- job description to normalized proof contract
+- GitHub OAuth state + PKCE, encrypted server-side token storage, status/list/select/disconnect
+- async repository analysis job with persisted progress/retry/failure, commit/tree/blob snapshot, file/repository limits, secret redaction, deterministic Java/manifest/source analysis, evidence sources, and normalized candidate skills
+- candidate evidence dispute and explicit visibility controls
+- grounded server-side project defense sourced from persisted evidence references
+- bounded practical challenge with recruiter-owned review state
+- versioned policy evaluation requiring repository evidence + passed defense + reviewed practical task before `VERIFIED`
+- privacy-safe Proof Passport with private/public-summary/public visibility
+- recruiter jobs, taxonomy requirement extraction, applications, candidate status workflow, structured Proof Contract, and requirement review
+- real frontend auth, GitHub connection, analysis polling, evidence, skills, examiner, passport, recruiter jobs/contracts; offline fixture remains clearly separated
+- automated tests for auth/API contracts, worker orchestration, deterministic analysis, secret redaction, and mocked GitHub snapshot fetching
 
 ## Next coherent implementation slice
 
-1. add real Spring API DTO/controllers for project/snapshot/evidence reads
-2. implement GitHub OAuth state/PKCE and server-side token vault
-3. implement worker queue and repository snapshot service
-4. implement Java/JS/TS/Python AST adapters and secret redaction
-5. replace local store data calls with TanStack Query API calls
-6. add Testcontainers integration tests for authorization and Flyway schema
-7. add isolated practical execution service
-8. implement disputes and recruiter share grants end to end
+1. add Testcontainers/PostgreSQL CI coverage once a Docker-enabled runner is available
+2. add provider HTTP client/reference validation and prompt execution telemetry
+3. add isolated practical execution service with no network/host mounts
+4. add cursor pagination, notification delivery, retention/deletion jobs, and richer dispute resolution
+5. add candidate job discovery/application UI and candidate view of shared Proof Contracts
+6. add institution/admin membership workflows and signed/verifiable credential export
+7. strengthen GitHub webhook/re-analysis freshness and rate-limit handling

@@ -2,72 +2,99 @@
 
 > Don't claim your skills. Prove them.
 
-SkillLink is an evidence-first proof-of-skill and talent verification platform. The first vertical slice turns a repository snapshot into traceable evidence, runs a project-specific defense, evaluates a bounded practical task, produces an explainable verification result, and lets a recruiter compare that proof against a structured job requirement.
+SkillLink is an evidence-first proof-of-skill platform. The working vertical slice starts with a candidate-owned repository source, pins analysis to a commit, persists traceable evidence, normalizes skills, supports a grounded project defense, requires a reviewer-owned practical verification, evaluates a versioned policy, publishes a privacy-controlled Proof Passport, and lets a recruiter review a structured Proof Contract.
 
-## Current build status
+## What is implemented
 
-This repository contains a working Phase 0 / Phase 1-oriented demo slice:
+### Offline demo mode
+The default Vite experience is an explicitly labeled deterministic fixture. It is useful for reviewing the product language and interaction model without credentials. It never masquerades as live GitHub, live AI, or sandbox execution.
 
-- premium responsive React/Vite product surface
-- deterministic offline repository fixture for `FoodBridge API`
-- repository connection and analysis job UX with real job-state transitions
-- traceable evidence cards tied to files and a commit snapshot
-- project-specific AI Proof Examiner UX
-- bounded practical verification task
-- explainable skill status and freshness model
-- recruiter job-to-proof contract and evidence review
-- public Proof Passport verification view
-- Spring Boot 3 / Java 21 modular-monolith foundation
-- AI-engine contract and prompt registry foundation
-- Flyway schema for core proof entities
-- architecture, security, AI, verification, API, and local-development docs
+### Server-backed mode
+Set `VITE_DEMO_MODE=false` to use the real React/API path. The current backend slice includes:
 
-The browser preview uses an explicit **Demo workspace**. It never presents the offline fixture as a live GitHub analysis. Live GitHub OAuth, external LLM calls, and sandboxed code execution are represented by production contracts and backend scaffolding, and are intentionally not faked in the demo.
+- Java 21 / Spring Boot 3 modular monolith with PostgreSQL and Flyway
+- password registration/login, short-lived JWT access tokens, hashed rotating refresh tokens, logout revocation, RBAC, structured errors, and audit events
+- GitHub OAuth state + PKCE flow, encrypted server-side access tokens, repository listing/selection, disconnect, and explicit missing-configuration errors
+- async analysis jobs with persisted state/progress/retry, immutable commit/tree snapshots, file/repository limits, secret redaction, deterministic Java/manifest/source analysis, normalized taxonomy mapping, evidence sources, and candidate-skill projections
+- evidence listing, candidate disputes, explicit visibility controls, and privacy-safe recruiter summaries
+- grounded project defense questions generated from persisted evidence references; answers are stored with rubric/prompt metadata and cannot independently verify a skill
+- bounded practical text-patch challenge with reviewer-owned `PASSED`/`NEEDS_CHANGES` outcomes
+- versioned policy evaluation requiring completed repository evidence, a passed project defense, and a reviewed practical result before `VERIFIED`
+- recruiter job creation with controlled-taxonomy requirement extraction, applications, status review, and requirement-by-requirement Proof Contracts
+- private/public-summary Proof Passport issuance containing only policy-verified skills; public DTOs exclude source code and source locations
+- optional FastAPI structured-output AI boundary; the policy engine remains the only writer of verified status
 
-## Run the working preview
+## Run locally
+
+### 1. PostgreSQL
+
+```sql
+CREATE USER skilllink PASSWORD 'change-me';
+CREATE DATABASE skilllink OWNER skilllink;
+```
+
+Docker Compose is available under `infrastructure/docker-compose.yml`, but Docker must be installed and running.
+
+### 2. Backend
+
+```bash
+cd SKILL-LINK/backend
+export JAVA_HOME=/path/to/jdk-21
+export DATABASE_URL=jdbc:postgresql://localhost:5432/skilllink
+export DATABASE_USERNAME=skilllink
+export DATABASE_PASSWORD=change-me
+# base64-encoded secret; replace in real environments
+export JWT_SECRET=c2tpbGxsaW5rLWxvY2FsLXNlY3JldC1jaGFuZ2UtYmVmb3JlLXByb2R1Y3Rpb24tcGxlYXNlLXZlcnktbG9uZw==
+./mvnw spring-boot:run
+```
+
+Flyway applies V1–V3 on startup. GitHub credentials are intentionally optional; without them, the API returns `GITHUB_NOT_CONFIGURED` rather than loading fixture repositories.
+
+### 3. Frontend
 
 ```bash
 cd SKILL-LINK/frontend
 npm install
+printf 'VITE_DEMO_MODE=false\nVITE_API_BASE_URL=/api/v1\nVITE_BACKEND_URL=http://localhost:8080\n' > .env.local
 npm run dev -- --host 0.0.0.0
 ```
 
-Or from the repository root:
+For the offline fixture, omit `.env.local` or set `VITE_DEMO_MODE=true`.
+
+### 4. Optional AI engine
 
 ```bash
-npm install
-npm run dev
+cd SKILL-LINK/ai-engine
+python -m venv .venv
+. .venv/bin/activate
+pip install -e '.[test]'
+uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-The Vite app opens at the local URL printed by Vite. Use the demo sign-in to enter the workspace.
+Provider calls are disabled by default. The AI contract accepts only redacted, source-referenced context and has no endpoint that can mark a skill verified.
 
-## Demo path
+## Verification commands
 
-1. Open **Build My Proof**.
-2. Sign in with any values (the banner explains this is local demo mode).
-3. Open **Projects → FoodBridge API**.
-4. Connect the explicitly labeled offline GitHub fixture and run analysis.
-5. Review file-backed evidence.
-6. Open **AI Examiner** and answer the project-specific defense.
-7. Complete the practical role-authorization task.
-8. Open **Proof Passport** to see JWT Authentication become `VERIFIED`.
-9. Switch to **Recruiter view** from the profile menu.
-10. Create a job or use the seeded `Java Backend Developer` proof contract.
-11. Inspect the requirement-by-requirement proof review.
+```bash
+# frontend
+cd frontend && npm run build && npm test -- --run
 
-## Production direction
-
-The browser demo is a local adapter. The production path is:
-
-```text
-React client
-  -> /api/v1
-Spring Boot modular monolith
-  -> PostgreSQL + Flyway
-  -> queue/worker boundary for analysis jobs
-  -> GitHub OAuth adapter
-  -> AI provider adapter / optional FastAPI engine
-  -> object storage for redacted snapshots and artifacts
+# backend, Java 21
+cd backend && ./mvnw -B test
 ```
 
-See `docs/local-development.md`, `docs/system-architecture.md`, and `docs/api-overview.md` for boundaries and next implementation steps.
+The backend tests cover auth error/cookie behavior, deterministic analysis, secret redaction, mocked GitHub commit/tree/blob snapshot fetching, worker state transitions, and health/API contracts.
+
+## Real proof loop
+
+1. Create a candidate account in server-backed mode.
+2. Connect GitHub and explicitly select one repository.
+3. Start analysis and poll the persisted job state.
+4. Inspect evidence and choose what may be recruiter-shared.
+5. Start the project defense; answers remain auditable and source-grounded.
+6. Create and submit the bounded practical challenge.
+7. A recruiter with an application reviews the submission; only then can policy evaluation produce `VERIFIED`.
+8. Issue a private Proof Passport or explicitly change its visibility.
+9. A recruiter creates a job, receives an application, generates a Proof Contract, and reviews each requirement.
+
+See `docs/local-development.md`, `docs/api-overview.md`, `docs/verification-model.md`, and `docs/security-model.md` for boundaries and operating assumptions.

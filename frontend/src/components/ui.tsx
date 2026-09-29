@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowUpRight, Check, CircleAlert, Clock3, FileCode2, Fingerprint, GitCommitHorizontal, LockKeyhole, ShieldCheck, Sparkles, TriangleAlert } from 'lucide-react';
 import type { Evidence, EvidenceStrength, FreshnessState, SkillStatus } from '../domain';
+import { isDemoMode } from '../api/client';
 
 export function Logo({ compact = false }: { compact?: boolean }) {
   return <div className={`brand-lockup ${compact ? 'brand-lockup-compact' : ''}`} aria-label="SkillLink">
@@ -67,5 +68,5 @@ export function EmptyState({ icon, title, description, action }: { icon: ReactNo
 export function TinyVerified() { return <span className="tiny-verified"><Check size={11} /> verified</span>; }
 
 export function DemoNote({ children }: { children?: ReactNode }) {
-  return <div className="demo-note"><Sparkles size={15} /><span><strong>Demo workspace</strong> {children ?? 'This view uses an offline fixture and local state. Live integrations are not being simulated.'}</span></div>;
+  return <div className={`demo-note ${isDemoMode ? '' : 'live-note'}`}><Sparkles size={15} /><span><strong>{isDemoMode ? 'Offline demo workspace' : 'Live API workspace'}</strong> {children ?? (isDemoMode ? 'This view uses an offline fixture and local state. Live integrations are not being simulated.' : 'This view reads server-backed data and does not use browser fixture state.')}</span></div>;
 }

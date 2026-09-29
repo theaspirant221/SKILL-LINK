@@ -14,9 +14,9 @@
 ## Identity and sessions
 
 - Spring Security owns server-side authentication and authorization.
-- Passwords use Argon2id or BCrypt with current cost guidance; plaintext passwords are never stored.
-- Access tokens are short-lived; refresh tokens rotate and are revoked on reuse.
-- OAuth state and PKCE are required for GitHub.
+- Passwords use BCrypt cost 12 in the current Spring configuration; plaintext passwords are never stored.
+- Access tokens are short-lived; refresh tokens are hashed, rotated, revoked on logout, and rejected after revocation.
+- OAuth state and PKCE are required for GitHub; state is one-time and server-bound.
 - GitHub tokens are encrypted at rest, scoped to the minimum required permissions, and removed when disconnected or no longer required.
 - Account recovery and email verification are audited.
 
