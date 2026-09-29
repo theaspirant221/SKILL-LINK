@@ -57,7 +57,7 @@ class AuthenticationFlowIntegrationTest {
         return new HttpEntity<>(body, headers);
     }
 
-    private static ResponseEntity<JsonNode> postJson(String path, String body) { return rest.postForEntity(path, jsonBody(body), JsonNode.class); }
+    private ResponseEntity<JsonNode> postJson(String path, String body) { return rest.postForEntity(path, jsonBody(body), JsonNode.class); }
 
     private static HttpEntity<Void> bearerEntity(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
@@ -82,7 +82,7 @@ class AuthenticationFlowIntegrationTest {
         return setCookie.substring("skilllink_refresh=".length(), setCookie.indexOf(';'));
     }
 
-    private static String register(String email) {
+    private String register(String email) {
         ResponseEntity<JsonNode> response = postJson("/api/v1/auth/register",
             "{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\",\"displayName\":\"It Candidate\"}");
         assertEquals(HttpStatus.OK, response.getStatusCode(), "registration should succeed: " + response.getBody());
