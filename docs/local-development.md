@@ -27,6 +27,7 @@ export DATABASE_URL=jdbc:postgresql://localhost:5432/skilllink
 export DATABASE_USERNAME=skilllink
 export DATABASE_PASSWORD=change-me
 export JWT_SECRET=<base64-encoded-long-random-secret>
+export TOKEN_ENCRYPTION_KEY=$(openssl rand -base64 32)
 ./mvnw -B spring-boot:run
 ```
 

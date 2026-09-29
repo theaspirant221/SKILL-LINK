@@ -65,7 +65,7 @@ async function request<T>(path: string, init: RequestInit = {}, allowRefresh = t
 
 export const api = {
   auth: {
-    register: (body: { email: string; password: string; displayName: string; role?: 'CANDIDATE' | 'RECRUITER' }) => request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(body) }).then((data) => { setAccessToken(data.accessToken); return data; }),
+    register: (body: { email: string; password: string; displayName: string }) => request<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(body) }).then((data) => { setAccessToken(data.accessToken); return data; }),
     login: (body: { email: string; password: string }) => request<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(body) }).then((data) => { setAccessToken(data.accessToken); return data; }),
     me: () => request<ApiUser>('/auth/me'),
     logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }).finally(() => setAccessToken(null)),

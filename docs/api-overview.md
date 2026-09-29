@@ -18,7 +18,7 @@ Errors use this envelope:
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| POST | `/auth/register` | create a candidate or recruiter account |
+| POST | `/auth/register` | create a candidate account; recruiter access is provisioned server-side |
 | POST | `/auth/login` | issue access + refresh session |
 | POST | `/auth/refresh` | rotate a non-revoked refresh session |
 | POST | `/auth/logout` | revoke the presented refresh session and expire the cookie |

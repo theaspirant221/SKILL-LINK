@@ -37,7 +37,7 @@ public class AuthService {
     @Transactional
     public AuthResult register(AuthDtos.RegisterRequest request, String userAgent, String ipAddress) {
         String email = normalizeEmail(request.email());
-        String role = normalizeRole(request.role());
+        String role = "CANDIDATE";
         if (users.findByEmail(email).isPresent()) throw new AuthException("EMAIL_ALREADY_REGISTERED", "An account with that email already exists.");
         try {
             UserRepository.AppUser user = users.create(email, passwordEncoder.encode(request.password().trim()), request.displayName().trim(), role);
@@ -91,7 +91,6 @@ public class AuthService {
     private String randomToken() { byte[] bytes = new byte[48]; secureRandom.nextBytes(bytes); return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes); }
     static String sha256(String value) { try { return HexFormatHolder.hex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); } catch (NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); } }
     private String normalizeEmail(String email) { return email.trim().toLowerCase(java.util.Locale.ROOT); }
-    private String normalizeRole(String requested) { String role = requested == null || requested.isBlank() ? "CANDIDATE" : requested.trim().toUpperCase(java.util.Locale.ROOT); if (!role.equals("CANDIDATE") && !role.equals("RECRUITER")) throw new AuthException("ROLE_NOT_ALLOWED", "This account role cannot be self-registered."); return role; }
     private String truncate(String value, int max) { return value == null ? null : value.substring(0, Math.min(value.length(), max)); }
 
     public record AuthResult(String accessToken, String refreshToken, UserRepository.AppUser user) {}

@@ -3,9 +3,12 @@ package com.skilllink.api;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import com.skilllink.api.auth.AuthService;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -18,6 +21,21 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> validation(MethodArgumentNotValidException exception, HttpServletRequest request) {
         return ResponseEntity.badRequest().body(new ApiError("VALIDATION_FAILED", "The request contains invalid fields.", requestId(request), Map.of("fields", exception.getBindingResult().getFieldErrors().stream().map(error -> error.getField()).toList())));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ApiError> malformedRequest(HttpMessageNotReadableException exception, HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(new ApiError("MALFORMED_REQUEST", "The request body could not be read.", requestId(request), Map.of()));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ResponseEntity<ApiError> notFound(NoResourceFoundException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError("NOT_FOUND", "The requested resource was not found.", requestId(request), Map.of()));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    ResponseEntity<ApiError> methodNotAllowed(HttpRequestMethodNotSupportedException exception, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(new ApiError("METHOD_NOT_ALLOWED", "The requested HTTP method is not supported.", requestId(request), Map.of()));
     }
 
     @ExceptionHandler(AuthService.AuthException.class)

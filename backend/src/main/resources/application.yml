@@ -48,8 +48,8 @@ skilllink:
   frontend-success-url: ${SKILLLINK_FRONTEND_SUCCESS_URL:http://localhost:5173/app/projects}
   frontend-failure-url: ${SKILLLINK_FRONTEND_FAILURE_URL:http://localhost:5173/app/projects?github=error}
   security:
-    jwt-secret: ${JWT_SECRET:ZGV2LXNraWxsaW5rLWp3dC1zZWNyZXQta2V5LTI1Ni1iaXQtc3RhZ2luZw==}
-    encryption-key: ${TOKEN_ENCRYPTION_KEY:c2tpbGxsaW5rLWRldi1hZXMta2V5LTMyLWJ5dGVzISE=}
+    jwt-secret: ${JWT_SECRET}
+    encryption-key: ${TOKEN_ENCRYPTION_KEY}
     access-token-minutes: ${ACCESS_TOKEN_MINUTES:15}
     refresh-token-days: ${REFRESH_TOKEN_DAYS:30}
   github:
