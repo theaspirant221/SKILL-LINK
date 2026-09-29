@@ -93,13 +93,12 @@ abstract class AbstractGithubIntegrationTest {
         return queryParam(location, "state");
     }
 
-    /** Completes user authorization with mocked GitHub responses; returns the redirect status. */
-    protected HttpStatus completeUserAuth(String accessToken, String state, String code) {
+    /** Completes user authorization with mocked GitHub responses; asserts the redirect. */
+    protected void completeUserAuth(String accessToken, String state, String code) {
         when(github.exchangeCode(eq(code), any())).thenReturn(new GithubClient.OAuthToken(ACCESS_TOKEN, "", Instant.now().plusSeconds(28800), REFRESH_TOKEN));
         when(github.currentUser(ACCESS_TOKEN)).thenReturn(new GithubClient.GithubUser(9001, "it-candidate", "It Candidate"));
         ResponseEntity<String> response = rest.exchange("/api/v1/github/callback?code=" + code + "&state=" + state, HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
         assertEquals(HttpStatus.FOUND, response.getStatusCode());
-        return response.getStatusCode();
     }
 
     /** Starts the installation flow and returns the raw state from the GitHub install redirect. */
