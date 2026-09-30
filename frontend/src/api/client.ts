@@ -59,6 +59,73 @@ export type SnapshotDetail = {
     integrityHash: string | null;
   };
 };
+export type AnalysisRun = {
+  analysisRunId: string;
+  snapshotId: string;
+  candidateId: string;
+  projectId: string;
+  repositoryId: string;
+  analyzerVersion: string;
+  status: 'QUEUED' | 'RUNNING' | 'COMPLETE' | 'FAILED';
+  startedAt: string | null;
+  completedAt: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  observationCount: number;
+  createdAt: string;
+  updatedAt: string;
+  commitSha: string | null;
+  shortSha: string | null;
+};
+export type Observation = {
+  observationId: string;
+  analysisRunId: string;
+  snapshotId: string;
+  observationType: string;
+  category: string;
+  factKey: string;
+  factValue: string | null;
+  language: string | null;
+  framework: string | null;
+  sourcePath: string | null;
+  startLine: number | null;
+  endLine: number | null;
+  symbol: string | null;
+  sourceHash: string | null;
+  detector: string;
+  detectorVersion: string;
+  confidence: string;
+  origin: string;
+  createdAt: string;
+};
+export type FileError = {
+  errorId: string;
+  analysisRunId: string;
+  snapshotId: string;
+  sourcePath: string;
+  errorCode: string;
+  errorMessage: string;
+  detector: string;
+  createdAt: string;
+};
+export type AnalysisDetail = {
+  run: AnalysisRun;
+  observations: Observation[];
+  fileErrors: FileError[];
+  summary: {
+    totalObservations: number;
+    languageCount: number;
+    frameworkCount: number;
+    dependencyCount: number;
+    endpointCount: number;
+    databaseCount: number;
+    securityCount: number;
+    testCount: number;
+    devopsCount: number;
+    languages: string[];
+    frameworks: string[];
+  };
+};
 export type ApiEvidence = { evidenceId: string; skillId: string; skillName: string; projectName: string; repositoryFullName: string; snapshotId: string; commitSha: string; sourceType: string; sourceLocation: string; observation: string; evidenceStrength: 'WEAK' | 'MODERATE' | 'STRONG' | 'DIRECT'; verificationMethod: string; status: 'OBSERVED' | 'VERIFIED' | 'DISPUTED' | 'REDACTED'; visibility: string; observedAt: string; sourceHash: string | null; independentSignal: string | null };
 export type ApiSkill = { skillId: string; key: string; name: string; category: string; status: string; freshnessState: string; lastVerifiedAt: string | null; latestEvidenceAt: string | null; evidenceCount: number };
 export type ExaminationQuestion = { questionId: string; sequence: number; category: string; prompt: string; contextReferences: string[]; answerStatus: string | null; feedback: string | null };
@@ -152,6 +219,20 @@ export const api = {
       request<SnapshotDetail>(`/projects/${projectId}/snapshots/${snapshotId}`),
     files: (projectId: string, snapshotId: string) =>
       request<SnapshotFile[]>(`/projects/${projectId}/snapshots/${snapshotId}/files`),
+  },
+  analysis: {
+    create: (projectId: string, snapshotId: string) =>
+      request<AnalysisRun>(`/projects/${projectId}/snapshots/${snapshotId}/analysis`, {
+        method: 'POST',
+      }),
+    list: (projectId: string, snapshotId: string) =>
+      request<AnalysisRun[]>(`/projects/${projectId}/snapshots/${snapshotId}/analysis`),
+    get: (projectId: string, snapshotId: string, runId: string) =>
+      request<AnalysisRun>(`/projects/${projectId}/snapshots/${snapshotId}/analysis/${runId}`),
+    detail: (projectId: string, snapshotId: string, runId: string) =>
+      request<AnalysisDetail>(`/projects/${projectId}/snapshots/${snapshotId}/analysis/${runId}/detail`),
+    observations: (projectId: string, snapshotId: string, runId: string) =>
+      request<Observation[]>(`/projects/${projectId}/snapshots/${snapshotId}/analysis/${runId}/observations`),
   },
   skills: { mine: () => request<ApiSkill[]>('/candidates/me/skills') },
   candidate: {
