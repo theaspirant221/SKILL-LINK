@@ -6,3 +6,12 @@ skilllink:
     jwt-secret: c2tpbGxsaW5rLWl0LWp3dC1zaWduaW5nLWtleS0zMi1ieXRlcy1vayE=
     # base64("skilllink-it-encryption-key-32!!") - exactly 32 bytes for AES-256/GCM
     encryption-key: c2tpbGxsaW5rLWl0LWVuY3J5cHRpb24ta2V5LTMyISE=
+  github:
+    # Test-only GitHub App fixtures; no real credentials. The private key is a throwaway
+    # 2048-bit RSA key generated for this repository's test suite (single-line env style).
+    app-id: "123456"
+    client-id: Iv1.skilllink-test
+    client-secret: test-client-secret
+    app-name: skilllink-test-app
+    webhook-secret: it-test-webhook-secret
+    private-key: "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC6i4Ewp5gZndL4\ndkg7Y02URAYo/ItWHpJAcT8ngQ0MsYlcwcpnhJIM2WHrGq43deE82LPT4dpTGUPc\nIxq/7juutfgYEuoGeMrldwHTadsBGv4w7XZW1znLc+fyjjPlPTVcefwc/geGuIRS\ngKFWaWSkd2aZw6H18i3AOApd8uynwcTD3QolPQEkUjS7YFv71jrK8qdSlir6DIDC\n45VpPN4RbRJzD059HzMuT70JpF4VNkREmFv4Mm+HiUV+B0z1RdMG/3SmkB4uYLz+\npUhjDtF6HuBSNGa8ujI0qg7fb1mPjdqB5lqqsYGlQZf+F1fDveUR7XZG9WXTgwD0\nu2CYE7yJAgMBAAECggEAM88R6srpFdg84y+qoP/T6IU59sEpC5qDAO3S3excDPXz\n0fSqe7SYgYQQS2UGFLYi/6ypyQN1iNXAAJApWjvWjI/SXxFFuNVseG1kbux73CM8\njKcu0jCFRymiNj3jUNv+iXgBmqW8vmBZs7Yw2Nh9kKXus27fePixVyzZSD1zF6Xi\nTtjQx6oGB2BTF5eLAXmU4mldnL6uhuCR2H/HxNgRezp494qiWYH7idz3BUH40Leo\niIP1yLTZS0Q+OVVP9qvnPFRPAyiHtMIjw0rGPRnNkY4z7FMqHFauaqMd25RLYzKX\nKj+TxjTDoubtbEKMbzw5mVZhwUt0PC0KOsSKqdmdvwKBgQDff0r/XOlu8MzRw26W\nqg2OOIqn3h07Tk1Q1PH3j76rbsE7k8JuoF0M58pBjUaN0WlCkwIFho9MiSHX8USU\n1PSinHPYkwyute8foiehQPH5EqjKXMHt0L06x1wvKY8mgRr/I6CBJZyH1P/P6QYK\nQzaZ30UvGew1QEtcx6qIg5zM5wKBgQDVrH5M6ImcvoSrc9idU3ahFMFLd2v/9QJF\n55sZs8YFo1cIdRpQKRjqGfw50j7/IEJuDaX5NpPQKFvU512KRK0sjyX3PM6Xq6t9\nrmy2HvuQ0QGt0NXXRK784S7z2TRQdX6aWVxfxWuzklmWsr+I0PZzMn0j21Z0RFov\ni+3LrSQNDwKBgQCUNLJEApXddpsr4p/8EwpoLEBuLxFNWZBVsNA/7TdwMUK8QjCl\n8Xui6jYqIAgQVTSq7BdkGKYAB9PEgf6Lf2g2SO9dR64aURUf8gS7nviWxXPetYH4\nNPq29qq/r5x42RZQ6Iwv+AQD4xA8C/dwaL/Va8RSBqunaFpRTSpd2oDpMwKBgB4l\nLdRv4ipI/rKpr1/SzKPBJ9wbxxLfYCi4mjswD7nv53F8A/BXO/qbG+iUburThEu+\nhTH5rzTo3LvWwG2nbr8gmvyciZEAWTtsBk5TZK5zrkb1dZXfTMjEhDlG5YiMawYf\noVappZ46AYWvRjJpOLvb3afXZAUXN5oJpczcan+lAoGBAMT7uZ67s9If5R5OWINp\nvE0VABdkd/i7Wv+S+RbPb1tGbU9kNHsPt0SOJHWPLIeFImXKDELlFB59O66ra8FJ\nXrUeVRZ36cgX0hcy0bOghaiNa9HRctX83KcWh4eXom2LWJKvjy6mUE0PSggRm/LZ\nd6tbz16MYBpZ2DLGKxZdSXI/\n-----END PRIVATE KEY-----"

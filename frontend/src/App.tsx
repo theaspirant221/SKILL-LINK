@@ -24,6 +24,7 @@ import RealPassportPage from './pages/real/RealPassportPage';
 import RealRecruiterPage from './pages/real/RealRecruiterPage';
 import RealCandidateJobsPage from './pages/real/RealCandidateJobsPage';
 import RealVerifyPage from './pages/real/RealVerifyPage';
+import RealGithubPage from './pages/real/RealGithubPage';
 
 function Protected({ children, role }: { children: React.ReactNode; role?: 'candidate' | 'recruiter' }) {
   const { signedIn, role: currentRole } = useStore();
@@ -43,11 +44,13 @@ export default function App() {
   const RecruiterJobs = isDemoMode ? JobsPage : RealRecruiterPage;
   const RecruiterCandidate = isDemoMode ? ProofReviewPage : RealRecruiterPage;
   const Verify = isDemoMode ? VerifyPage : RealVerifyPage;
+  const CandidateGithub = isDemoMode ? OverviewPage : RealGithubPage;
   return <Routes>
     <Route path="/" element={<LandingPage />} />
     <Route path="/signin" element={<AuthPage />} />
     <Route path="/verify/:proofId" element={<Verify />} />
     <Route path="/app" element={<Protected role="candidate"><AppShell><CandidateOverview /></AppShell></Protected>} />
+    <Route path="/app/github" element={isDemoMode ? <Navigate to="/app/projects" replace /> : <Protected role="candidate"><AppShell><CandidateGithub /></AppShell></Protected>} />
     <Route path="/app/projects" element={<Protected role="candidate"><AppShell><CandidateProjects /></AppShell></Protected>} />
     <Route path="/app/evidence" element={<Protected role="candidate"><AppShell><CandidateEvidence /></AppShell></Protected>} />
     <Route path="/app/skills" element={<Protected role="candidate"><AppShell><CandidateSkills /></AppShell></Protected>} />

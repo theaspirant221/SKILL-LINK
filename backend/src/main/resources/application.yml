@@ -45,20 +45,25 @@ management:
 skilllink:
   demo-mode: ${SKILLLINK_DEMO_MODE:false}
   web-origin: ${SKILLLINK_WEB_ORIGIN:http://localhost:5173}
-  frontend-success-url: ${SKILLLINK_FRONTEND_SUCCESS_URL:http://localhost:5173/app/projects}
-  frontend-failure-url: ${SKILLLINK_FRONTEND_FAILURE_URL:http://localhost:5173/app/projects?github=error}
+  frontend-success-url: ${SKILLLINK_FRONTEND_SUCCESS_URL:http://localhost:5173/app/github}
+  frontend-failure-url: ${SKILLLINK_FRONTEND_FAILURE_URL:http://localhost:5173/app/github?github=error}
   security:
     jwt-secret: ${JWT_SECRET}
     encryption-key: ${TOKEN_ENCRYPTION_KEY}
     access-token-minutes: ${ACCESS_TOKEN_MINUTES:15}
     refresh-token-days: ${REFRESH_TOKEN_DAYS:30}
   github:
-    client-id: ${GITHUB_CLIENT_ID:}
-    client-secret: ${GITHUB_CLIENT_SECRET:}
-    redirect-uri: ${GITHUB_REDIRECT_URI:http://localhost:8080/api/v1/github/callback}
+    # GitHub App (not a classic OAuth app). See docs/github-app-setup.md.
+    app-id: ${GITHUB_APP_ID:}
+    client-id: ${GITHUB_APP_CLIENT_ID:}
+    client-secret: ${GITHUB_APP_CLIENT_SECRET:}
+    private-key: ${GITHUB_APP_PRIVATE_KEY:}
+    app-name: ${GITHUB_APP_NAME:}
+    callback-url: ${GITHUB_CALLBACK_URL:http://localhost:8080/api/v1/github/callback}
+    setup-url: ${GITHUB_SETUP_URL:http://localhost:8080/api/v1/github/install/callback}
+    webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
     api-url: ${GITHUB_API_URL:https://api.github.com}
     oauth-url: ${GITHUB_OAUTH_URL:https://github.com/login/oauth}
-    oauth-scopes: ${GITHUB_OAUTH_SCOPES:read:user public_repo}
     api-version: ${GITHUB_API_VERSION:2026-03-10}
   ai:
     provider: ${LLM_PROVIDER:disabled}

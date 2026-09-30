@@ -23,12 +23,17 @@ Errors use this envelope:
 | POST | `/auth/refresh` | rotate a non-revoked refresh session |
 | POST | `/auth/logout` | revoke the presented refresh session and expire the cookie |
 | GET | `/auth/me` | current identity |
-| GET | `/github/connect` | begin GitHub OAuth state + PKCE flow |
+| GET | `/github/connect` | begin GitHub App user authorization (state + PKCE S256) |
 | GET | `/github/callback` | consume one-time state and exchange code server-side |
-| GET | `/github/status` | connection status; never returns an access token |
-| GET | `/github/repositories` | list authorized repository metadata |
+| GET | `/github/install` | begin GitHub App installation flow (user selects repositories on GitHub) |
+| GET | `/github/install/callback` | setup callback: single-use state, stores the installation identity |
+| GET | `/github/status` | explicit connection status (`DISCONNECTED`, `CONNECTED`, `REAUTH_REQUIRED`, `INSTALLATION_MISSING`, `INSTALLATION_REMOVED`, `TOKEN_INVALID`); never returns a token |
+| GET | `/github/repositories` | only repositories the active installation grants access to |
 | POST | `/github/repositories/{githubRepositoryId}/select` | deliberately create/select one project source |
-| DELETE | `/github/connection` | disconnect and invalidate the source connection |
+| DELETE | `/github/connection` | revoke the user grant, remove local associations, stop repository access; evidence is preserved |
+| POST | `/github/webhooks` | signature-validated GitHub App webhooks (`installation`, `installation_repositories`) |
+
+The GitHub App installation and the user authorization are separate concepts: the installation (Contents/Metadata read-only) controls repository access, user authorization identifies the GitHub user. Installation access tokens are short-lived, server-only, and never persisted; user tokens are encrypted at rest and refreshed when GitHub issues refresh tokens. Webhook deliveries are HMAC-verified with `GITHUB_WEBHOOK_SECRET` and deduplicated by delivery id.
 
 ## Candidate proof engine
 

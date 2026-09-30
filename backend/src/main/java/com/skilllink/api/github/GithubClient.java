@@ -2,20 +2,22 @@ package com.skilllink.api.github;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
+/**
+ * User-authorization and repository-content operations against GitHub. The user access token
+ * (and refresh token, when GitHub issues one) are treated as opaque secrets: they are exchanged
+ * server-side, stored encrypted, and never sent to the browser.
+ */
 @Component
 public class GithubClient {
     private final GithubProperties properties;
@@ -24,25 +26,35 @@ public class GithubClient {
 
     public GithubClient(GithubProperties properties, ObjectMapper objectMapper) { this.properties = properties; this.objectMapper = objectMapper; this.rest = RestClient.create(); }
 
+    public record OAuthToken(String value, String scope, Instant expiresAt, String refreshToken) {}
+
+    /** Exchanges the authorization code together with the PKCE code verifier, server-side only. */
     public OAuthToken exchangeCode(String code, String verifier) {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("client_id", properties.clientId()); form.add("client_secret", properties.clientSecret()); form.add("code", code); form.add("redirect_uri", properties.redirectUri()); form.add("code_verifier", verifier);
+        form.add("client_id", properties.clientId()); form.add("client_secret", properties.clientSecret()); form.add("code", code); form.add("redirect_uri", properties.callbackUrl()); form.add("code_verifier", verifier);
         JsonNode json = rest.post().uri(properties.oauthUrl() + "/access_token").contentType(MediaType.APPLICATION_FORM_URLENCODED).accept(MediaType.APPLICATION_JSON).body(form).exchange((request, response) -> readResponse(response));
         if (json.path("access_token").isMissingNode()) throw new GithubException("GITHUB_TOKEN_EXCHANGE_FAILED", "GitHub authorization could not be completed.", 502);
-        return new OAuthToken(json.path("access_token").asText(), json.path("scope").asText(""), json.path("expires_in").isNumber() ? Instant.now().plusSeconds(json.path("expires_in").asLong()) : null);
+        return new OAuthToken(json.path("access_token").asText(), json.path("scope").asText(""), json.path("expires_in").isNumber() ? Instant.now().plusSeconds(json.path("expires_in").asLong()) : null, json.path("refresh_token").isMissingNode() ? null : json.path("refresh_token").asText());
+    }
+
+    /** Refreshes an expiring user access token using GitHub's refresh-token grant, when enabled for the app. */
+    public OAuthToken refreshToken(String refreshToken) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("client_id", properties.clientId()); form.add("client_secret", properties.clientSecret()); form.add("grant_type", "refresh_token"); form.add("refresh_token", refreshToken);
+        JsonNode json = rest.post().uri(properties.oauthUrl() + "/access_token").contentType(MediaType.APPLICATION_FORM_URLENCODED).accept(MediaType.APPLICATION_JSON).body(form).exchange((request, response) -> readResponse(response));
+        if (json.path("access_token").isMissingNode()) throw new GithubException("GITHUB_REFRESH_FAILED", "The GitHub session could not be refreshed.", 502);
+        return new OAuthToken(json.path("access_token").asText(), json.path("scope").asText(""), json.path("expires_in").isNumber() ? Instant.now().plusSeconds(json.path("expires_in").asLong()) : null, json.path("refresh_token").isMissingNode() ? null : json.path("refresh_token").asText());
     }
 
     public GithubUser currentUser(String token) { JsonNode json = get("/user", token); return new GithubUser(json.path("id").asLong(), json.path("login").asText(), json.path("name").asText(json.path("login").asText())); }
 
-    public List<GithubDtos.RepositorySummary> repositories(String token) {
-        URI uri = UriComponentsBuilder.fromUriString(properties.apiUrl() + "/user/repos").queryParam("per_page", 100).queryParam("sort", "updated").queryParam("affiliation", "owner,collaborator,organization_member").build().toUri();
-        JsonNode json = get(uri.toString(), token);
-        List<GithubDtos.RepositorySummary> result = new ArrayList<>();
-        if (!json.isArray()) return result;
-        for (JsonNode node : json) {
-            result.add(new GithubDtos.RepositorySummary(node.path("id").asText(), node.path("name").asText(), node.path("full_name").asText(), node.path("owner").path("login").asText(), node.path("private").asBoolean(), node.path("private").asBoolean() ? "PRIVATE" : "PUBLIC", node.path("default_branch").asText("main"), node.path("language").isNull() ? null : node.path("language").asText(), parseInstant(node.path("updated_at").asText(null)), node.path("size").asLong(0), node.path("description").isNull() ? null : node.path("description").asText()));
-        }
-        return result;
+    /** Revokes the user OAuth grant identified by the token. Best-effort during disconnect. */
+    public void revokeUserGrant(String token) {
+        rest.method(HttpMethod.DELETE).uri(properties.apiUrl() + "/applications/" + properties.clientId() + "/grant")
+            .headers(headers -> headers.setBasicAuth(properties.clientId(), properties.clientSecret()))
+            .contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)
+            .body(Map.of("access_token", token))
+            .exchange((request, response) -> { if (!response.getStatusCode().is2xxSuccessful()) throw new GithubException("GITHUB_REVOKE_FAILED", "GitHub did not revoke the authorization.", response.getStatusCode().value()); return Void.TYPE; });
     }
 
     public JsonNode commit(String fullName, String ref, String token) { return get("/repos/" + safePath(fullName) + "/commits/" + safePath(ref), token); }
@@ -59,8 +71,6 @@ public class GithubClient {
         return objectMapper.readTree(response.getBody());
     }
     private String safePath(String value) { return value.replace("\\", "").replace("..", ""); }
-    private Instant parseInstant(String value) { try { return value == null ? null : Instant.parse(value); } catch (Exception ignored) { return null; } }
-    public record OAuthToken(String value, String scope, Instant expiresAt) {}
     public record GithubUser(long id, String login, String name) {}
     public static class GithubException extends RuntimeException { private final String code; private final int status; public GithubException(String code, String message, int status) { super(message); this.code = code; this.status = status; } public String code() { return code; } public int status() { return status; } }
 }

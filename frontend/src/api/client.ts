@@ -1,7 +1,9 @@
 export type ApiUser = { id: string; email: string; displayName: string; role: 'CANDIDATE' | 'RECRUITER' };
 export type AuthResponse = { accessToken: string; accessTokenExpiresInSeconds: number; user: ApiUser };
-export type GithubStatus = { connected: boolean; login: string | null; scopes: string | null; connectedAt: string | null };
-export type GithubRepository = { id: string; name: string; fullName: string; owner: string; privateRepository: boolean; visibility: 'PUBLIC' | 'PRIVATE'; defaultBranch: string; primaryLanguage: string | null; updatedAt: string | null; sizeKb: number; description: string | null };
+export type GithubInstallation = { installationId: number; accountId: number; accountLogin: string; accountType: string; repositorySelection: string; status: string };
+export type GithubConnectionStatus = 'DISCONNECTED' | 'CONNECTED' | 'REAUTH_REQUIRED' | 'INSTALLATION_MISSING' | 'INSTALLATION_REMOVED' | 'TOKEN_INVALID';
+export type GithubStatus = { status: GithubConnectionStatus; connected: boolean; githubLogin: string | null; githubUserId: number | null; scopes: string | null; connectedAt: string | null; lastValidatedAt: string | null; installation: GithubInstallation | null };
+export type GithubRepository = { id: string; name: string; fullName: string; owner: string; privateRepository: boolean; visibility: 'PUBLIC' | 'PRIVATE'; defaultBranch: string; primaryLanguage: string | null; updatedAt: string | null; sizeKb: number; description: string | null; accountLogin: string | null };
 export type ApiProject = { projectId: string; repositoryId: string; name: string; fullName: string; branch: string; owner: string; primaryLanguage: string | null; visibility: string };
 export type AnalysisJob = { jobId: string; projectId: string; snapshotId: string | null; state: 'QUEUED' | 'FETCHING' | 'ANALYZING' | 'MAPPING' | 'COMPLETED' | 'FAILED'; progress: number; stage: string; errorCode: string | null; errorMessage: string | null; createdAt: string; startedAt: string | null; completedAt: string | null };
 export type ApiEvidence = { evidenceId: string; skillId: string; skillName: string; projectName: string; repositoryFullName: string; snapshotId: string; commitSha: string; sourceType: string; sourceLocation: string; observation: string; evidenceStrength: 'WEAK' | 'MODERATE' | 'STRONG' | 'DIRECT'; verificationMethod: string; status: 'OBSERVED' | 'VERIFIED' | 'DISPUTED' | 'REDACTED'; visibility: string; observedAt: string; sourceHash: string | null; independentSignal: string | null };
@@ -72,6 +74,7 @@ export const api = {
   },
   github: {
     connectUrl: () => `${API_BASE}/github/connect`,
+    installUrl: () => `${API_BASE}/github/install`,
     status: () => request<GithubStatus>('/github/status'),
     repositories: () => request<GithubRepository[]>('/github/repositories'),
     select: (githubRepositoryId: string) => request<{ projectId: string; projectName: string; repositoryFullName: string; commitBranch: string }>(`/github/repositories/${encodeURIComponent(githubRepositoryId)}/select`, { method: 'POST' }),
