@@ -20,6 +20,10 @@ ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS status text NOT NULL DE
 ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS error_code text;
 ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS error_message text;
 ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS branch_name text;
+ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS included_file_count integer NOT NULL DEFAULT 0;
+ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS excluded_file_count integer NOT NULL DEFAULT 0;
+ALTER TABLE repository_snapshot ADD COLUMN IF NOT EXISTS total_bytes bigint NOT NULL DEFAULT 0;
 
 -- Backfill branch_name from branch for existing rows
 UPDATE repository_snapshot SET branch_name = branch WHERE branch_name IS NULL AND branch IS NOT NULL;
