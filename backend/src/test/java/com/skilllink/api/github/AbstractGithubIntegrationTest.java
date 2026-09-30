@@ -76,6 +76,7 @@ abstract class AbstractGithubIntegrationTest {
     @Autowired protected TokenCipher cipher;
     @Autowired protected GithubOAuthStateRepository states;
     @Autowired protected GithubInstallationRepository installations;
+    @Autowired protected org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     @MockBean protected GithubClient github;
     @MockBean protected GithubAppClient appClient;
 
@@ -109,7 +110,8 @@ abstract class AbstractGithubIntegrationTest {
     protected String registerRecruiter() {
         String email = uniqueEmail();
         registeredEmails.add(email);
-        jdbc.update("INSERT INTO app_user(email, password_hash, display_name, role) VALUES (?, 'x', 'It Recruiter', 'RECRUITER')", email);
+        jdbc.update("INSERT INTO app_user(email, password_hash, display_name, role) VALUES (?, ?, 'It Recruiter', 'RECRUITER')",
+            email, passwordEncoder.encode(PASSWORD));
         ResponseEntity<JsonNode> response = rest.postForEntity("/api/v1/auth/login", jsonBody(
             "{\"email\":\"" + email + "\",\"password\":\"" + PASSWORD + "\"}"), JsonNode.class);
         assertEquals(HttpStatus.OK, response.getStatusCode(), "recruiter login should succeed: " + response.getBody());
