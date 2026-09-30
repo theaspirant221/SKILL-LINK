@@ -51,7 +51,7 @@ import static org.mockito.Mockito.when;
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-abstract class AbstractGithubIntegrationTest {
+public abstract class AbstractGithubIntegrationTest {
     protected static final String PASSWORD = "correct-horse-battery";
     protected static final String ACCESS_TOKEN = "gho_it_user_access_token";
     protected static final String REFRESH_TOKEN = "ghr_it_refresh_token";
