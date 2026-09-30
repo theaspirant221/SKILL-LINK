@@ -76,7 +76,7 @@ class SnapshotServiceTest {
             }
             """));
 
-        when(snapshots.create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(snapshotId);
+        when(snapshots.create(any(UUID.class), any(UUID.class), any(UUID.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(snapshotId);
         when(snapshots.findById(eq(candidateId), eq(projectId), eq(snapshotId))).thenReturn(java.util.Optional.of(
             new SnapshotRepository.SnapshotRow(
                 snapshotId, candidateId, projectId, repositoryId,
@@ -112,7 +112,7 @@ class SnapshotServiceTest {
         assertEquals("READY", response.status());
         assertEquals("acme/foodbridge", response.fullName());
 
-        verify(snapshots).create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(snapshots).create(any(UUID.class), any(UUID.class), any(UUID.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
         verify(snapshotFiles).insertBatch(eq(snapshotId), anyList());
     }
 
@@ -148,7 +148,7 @@ class SnapshotServiceTest {
 
         assertEquals(existingId, response.snapshotId());
         assertEquals("same-sha-123", response.commitSha());
-        verify(snapshots, never()).create(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(snapshots, never()).create(any(UUID.class), any(UUID.class), any(UUID.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
     }
 
     @Test
