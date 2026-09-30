@@ -59,7 +59,7 @@ class SnapshotServiceTest {
 
         when(projects.repository(candidateId, projectId)).thenReturn(repository);
         when(githubOAuth.repositories(candidateId)).thenReturn(List.of(
-            new GithubDtos.RepositorySummary("7001", "foodbridge", "acme/foodbridge", "acme", true, "PRIVATE", "main", "Java", "2026-09-01T10:00:00Z", 4200, "Fixture repo", "acme-org")
+            new GithubDtos.RepositorySummary("7001", "foodbridge", "acme/foodbridge", "acme", true, "PRIVATE", "main", "Java", Instant.parse("2026-09-01T10:00:00Z"), 4200, "Fixture repo", "acme-org")
         ));
         when(githubOAuth.accessToken(candidateId)).thenReturn("token");
         when(snapshots.findReadyByRepoCommitAndPolicy(eq(repositoryId), anyString(), eq("v1"))).thenReturn(java.util.Optional.empty());
@@ -125,7 +125,7 @@ class SnapshotServiceTest {
 
         when(projects.repository(candidateId, projectId)).thenReturn(repository);
         when(githubOAuth.repositories(candidateId)).thenReturn(List.of(
-            new GithubDtos.RepositorySummary("7001", "foodbridge", "acme/foodbridge", "acme", true, "PRIVATE", "main", "Java", "2026-09-01T10:00:00Z", 4200, "Fixture repo", "acme-org")
+            new GithubDtos.RepositorySummary("7001", "foodbridge", "acme/foodbridge", "acme", true, "PRIVATE", "main", "Java", Instant.parse("2026-09-01T10:00:00Z"), 4200, "Fixture repo", "acme-org")
         ));
         when(githubOAuth.accessToken(candidateId)).thenReturn("token");
         when(github.commit(anyString(), anyString(), anyString())).thenReturn(mapper.readTree("""
