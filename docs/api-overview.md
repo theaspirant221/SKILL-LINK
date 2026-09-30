@@ -44,9 +44,14 @@ The GitHub App installation and the user authorization are separate concepts: th
 | GET | `/projects/{projectId}/snapshots` | list immutable snapshots for a project (multiple SHAs over time) |
 | GET | `/projects/{projectId}/snapshots/{snapshotId}` | snapshot metadata + file manifest + integrity summary |
 | GET | `/projects/{projectId}/snapshots/{snapshotId}/files` | file manifest entries (path, language, size, hash, inclusion, exclusion reason, secret redaction) |
-| POST | `/projects/{projectId}/analysis` | queue an async commit snapshot analysis (uses latest READY snapshot or creates one) |
-| GET | `/projects/{projectId}/analysis/{jobId}` | persisted job state/progress/error |
-| POST | `/projects/{projectId}/analysis/{jobId}/retry` | retry only a failed job |
+| POST | `/projects/{projectId}/snapshots/{snapshotId}/analysis` | create deterministic analysis run for READY immutable snapshot (server fetches included files at exact blob SHA, runs language/manifest/Java AST/API/DB/security/test/devops detectors, persists deterministic observations) |
+| GET | `/projects/{projectId}/snapshots/{snapshotId}/analysis` | list deterministic analysis runs for a snapshot |
+| GET | `/projects/{projectId}/snapshots/{snapshotId}/analysis/{runId}` | deterministic run status + observation count |
+| GET | `/projects/{projectId}/snapshots/{snapshotId}/analysis/{runId}/detail` | run + grouped observations + file errors + summary (languages, frameworks, deps, endpoints, DB, security, testing, devops) |
+| GET | `/projects/{projectId}/snapshots/{snapshotId}/analysis/{runId}/observations` | raw deterministic observations with source traceability (snapshotId, commitSha, path, symbol, startLine, endLine, sourceHash, detector, origin DETERMINISTIC) |
+| POST | `/projects/{projectId}/analysis` | queue an async commit snapshot analysis (uses latest READY snapshot or creates one) — legacy flow |
+| GET | `/projects/{projectId}/analysis/{jobId}` | persisted job state/progress/error — legacy |
+| POST | `/projects/{projectId}/analysis/{jobId}/retry` | retry only a failed job — legacy |
 | GET | `/projects/{projectId}/evidence` | snapshot/source-backed evidence DTOs |
 | GET | `/candidates/me/skills` | normalized skill projection and freshness |
 | POST | `/evidence/{evidenceId}/dispute` | open a candidate dispute |
