@@ -155,13 +155,13 @@ public class SnapshotRepository {
 
     public void updateCommitMetadata(UUID snapshotId, String commitAuthor, String commitMessage, Instant commitTimestamp) {
         jdbc.update(
-            "UPDATE repository_snapshot SET commit_author = ?, commit_message = ?, commit_timestamp = ?, updated_at = now() WHERE id = ?",
+            "UPDATE repository_snapshot SET commit_author = ?, commit_message = ?, commit_timestamp = ? WHERE id = ?",
             commitAuthor, commitMessage, commitTimestamp == null ? null : Timestamp.from(commitTimestamp), snapshotId
         );
     }
 
     public void updateStatus(UUID snapshotId, String status) {
-        jdbc.update("UPDATE repository_snapshot SET status = ?, updated_at = now() WHERE id = ?", status, snapshotId);
+        jdbc.update("UPDATE repository_snapshot SET status = ? WHERE id = ?", status, snapshotId);
     }
 
     public void markReady(UUID snapshotId, int fileCount, int included, int excluded, long totalBytes, String integrityHash, String sourceHash) {
@@ -175,27 +175,24 @@ public class SnapshotRepository {
                 total_bytes = ?,
                 content_size_bytes = ?,
                 selected_file_count = ?,
-                file_count = ?,
                 integrity_hash = ?,
-                source_hash = ?,
-                snapshot_created_at = now(),
-                updated_at = now()
+                source_hash = ?
             WHERE id = ?
             """,
-            fileCount, included, excluded, totalBytes, totalBytes, included, fileCount, integrityHash, sourceHash, snapshotId
+            fileCount, included, excluded, totalBytes, totalBytes, included, integrityHash, sourceHash, snapshotId
         );
     }
 
     public void markFailed(UUID snapshotId, String errorCode, String errorMessage) {
         jdbc.update(
-            "UPDATE repository_snapshot SET status = 'FAILED', error_code = ?, error_message = ?, updated_at = now() WHERE id = ?",
+            "UPDATE repository_snapshot SET status = 'FAILED', error_code = ?, error_message = ? WHERE id = ?",
             errorCode, errorMessage, snapshotId
         );
     }
 
     public void updateProgress(UUID snapshotId, String status, int fileCount, long totalBytes) {
         jdbc.update(
-            "UPDATE repository_snapshot SET status = ?, file_count = ?, total_bytes = ?, updated_at = now() WHERE id = ?",
+            "UPDATE repository_snapshot SET status = ?, file_count = ?, total_bytes = ? WHERE id = ?",
             status, fileCount, totalBytes, snapshotId
         );
     }
