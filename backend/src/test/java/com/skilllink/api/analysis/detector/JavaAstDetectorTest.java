@@ -67,7 +67,7 @@ class JavaAstDetectorTest {
                 private Long id;
 
                 @OneToMany
-                private java.util.List<String> roles;
+                private String roles;
 
                 @ManyToOne
                 @JoinColumn(name = "org_id")

@@ -137,10 +137,13 @@ public class JavaAstDetector {
                                 obs.add(observation(runId, snapshotId, "FIELD", "LANGUAGE", fieldName, fieldType,
                                     "Java", null, path, fStart, fEnd, fieldSymbol, file.contentHash(), "FIELD"));
 
-                                // Check field annotations for JPA
+                                // Check field annotations for JPA - split Id vs relationships
                                 for (AnnotationExpr ann : field.getAnnotations()) {
                                     String annName = ann.getNameAsString();
-                                    if (Set.of("Id", "OneToMany", "ManyToOne", "OneToOne", "ManyToMany", "JoinColumn", "Column", "JoinTable").contains(annName)) {
+                                    if ("Id".equals(annName)) {
+                                        obs.add(observation(runId, snapshotId, "JPA_ID", "DATABASE", annName, fieldName,
+                                            "Java", "JPA", path, fStart, fEnd, fieldSymbol, file.contentHash(), annName));
+                                    } else if (Set.of("OneToMany", "ManyToOne", "OneToOne", "ManyToMany", "JoinColumn", "Column", "JoinTable").contains(annName)) {
                                         obs.add(observation(runId, snapshotId, "JPA_RELATIONSHIP", "DATABASE", annName, fieldName,
                                             "Java", "JPA", path, fStart, fEnd, fieldSymbol, file.contentHash(), annName));
                                     }

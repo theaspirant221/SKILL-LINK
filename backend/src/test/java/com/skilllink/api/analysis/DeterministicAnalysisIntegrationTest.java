@@ -657,7 +657,7 @@ class DeterministicAnalysisIntegrationTest extends AbstractGithubIntegrationTest
                 private String email;
 
                 @OneToMany(mappedBy = "user")
-                private java.util.List<String> roles;
+                private String roles;
 
                 @ManyToOne
                 @JoinColumn(name = "org_id")
