@@ -6,6 +6,59 @@ export type GithubStatus = { status: GithubConnectionStatus; connected: boolean;
 export type GithubRepository = { id: string; name: string; fullName: string; owner: string; privateRepository: boolean; visibility: 'PUBLIC' | 'PRIVATE'; defaultBranch: string; primaryLanguage: string | null; updatedAt: string | null; sizeKb: number; description: string | null; accountLogin: string | null };
 export type ApiProject = { projectId: string; repositoryId: string; name: string; fullName: string; branch: string; owner: string; primaryLanguage: string | null; visibility: string };
 export type AnalysisJob = { jobId: string; projectId: string; snapshotId: string | null; state: 'QUEUED' | 'FETCHING' | 'ANALYZING' | 'MAPPING' | 'COMPLETED' | 'FAILED'; progress: number; stage: string; errorCode: string | null; errorMessage: string | null; createdAt: string; startedAt: string | null; completedAt: string | null };
+export type Snapshot = {
+  snapshotId: string;
+  candidateId: string;
+  projectId: string;
+  repositoryId: string;
+  githubRepositoryId: string | null;
+  owner: string | null;
+  repositoryName: string | null;
+  fullName: string | null;
+  commitSha: string;
+  shortSha: string;
+  branchName: string | null;
+  commitAuthor: string | null;
+  commitMessage: string | null;
+  commitTimestamp: string | null;
+  snapshotCreatedAt: string | null;
+  analysisVersion: string;
+  filePolicyVersion: string;
+  status: 'CREATED' | 'FETCHING' | 'READY' | 'FAILED';
+  fileCount: number;
+  includedFileCount: number;
+  excludedFileCount: number;
+  totalBytes: number;
+  integrityHash: string | null;
+  errorCode: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+export type SnapshotFile = {
+  path: string;
+  language: string | null;
+  sizeBytes: number;
+  contentHash: string;
+  blobSha: string | null;
+  included: boolean;
+  exclusionReason: string | null;
+  secretRedacted: boolean;
+  secretCount: number;
+};
+export type SnapshotDetail = {
+  snapshot: Snapshot;
+  files: SnapshotFile[];
+  summary: {
+    totalFiles: number;
+    includedFiles: number;
+    excludedFiles: number;
+    totalBytes: number;
+    secretRedactedFiles: number;
+    totalSecrets: number;
+    integrityHash: string | null;
+  };
+};
 export type ApiEvidence = { evidenceId: string; skillId: string; skillName: string; projectName: string; repositoryFullName: string; snapshotId: string; commitSha: string; sourceType: string; sourceLocation: string; observation: string; evidenceStrength: 'WEAK' | 'MODERATE' | 'STRONG' | 'DIRECT'; verificationMethod: string; status: 'OBSERVED' | 'VERIFIED' | 'DISPUTED' | 'REDACTED'; visibility: string; observedAt: string; sourceHash: string | null; independentSignal: string | null };
 export type ApiSkill = { skillId: string; key: string; name: string; category: string; status: string; freshnessState: string; lastVerifiedAt: string | null; latestEvidenceAt: string | null; evidenceCount: number };
 export type ExaminationQuestion = { questionId: string; sequence: number; category: string; prompt: string; contextReferences: string[]; answerStatus: string | null; feedback: string | null };
@@ -87,6 +140,18 @@ export const api = {
     analysis: (projectId: string, jobId: string) => request<AnalysisJob>(`/projects/${projectId}/analysis/${jobId}`),
     retryAnalysis: (projectId: string, jobId: string) => request<AnalysisJob>(`/projects/${projectId}/analysis/${jobId}/retry`, { method: 'POST' }),
     evidence: (projectId: string) => request<ApiEvidence[]>(`/projects/${projectId}/evidence`),
+  },
+  snapshots: {
+    create: (projectId: string, branch?: string) =>
+      request<Snapshot>(`/projects/${projectId}/snapshots`, {
+        method: 'POST',
+        body: JSON.stringify({ branch: branch || null }),
+      }),
+    list: (projectId: string) => request<Snapshot[]>(`/projects/${projectId}/snapshots`),
+    get: (projectId: string, snapshotId: string) =>
+      request<SnapshotDetail>(`/projects/${projectId}/snapshots/${snapshotId}`),
+    files: (projectId: string, snapshotId: string) =>
+      request<SnapshotFile[]>(`/projects/${projectId}/snapshots/${snapshotId}/files`),
   },
   skills: { mine: () => request<ApiSkill[]>('/candidates/me/skills') },
   candidate: {
