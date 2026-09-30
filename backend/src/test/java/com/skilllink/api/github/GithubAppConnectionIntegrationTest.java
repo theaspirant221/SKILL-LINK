@@ -13,7 +13,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,7 +29,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void connectRedirectIncludesStateAndPkceS256AndNeverTheClientSecret() {
         String token = registerCandidate();
-        org.springframework.http.ResponseEntity<String> response = rest.exchange("/api/v1/github/connect", HttpMethod.GET, bearer(token), String.class);
+        org.springframework.http.ResponseEntity<String> response = getWithoutRedirects("/api/v1/github/connect", bearer(token));
         assertEquals(HttpStatus.FOUND, response.getStatusCode());
         String location = response.getHeaders().getFirst(HttpHeaders.LOCATION);
         assertTrue(location.startsWith("https://github.com/login/oauth/authorize"), "authorize URL expected: " + location);
@@ -51,7 +50,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
         assertEquals(GithubDtos.STATUS_INSTALLATION_MISSING, afterAuth.status());
         assertFalse(afterAuth.connected());
 
-        org.springframework.http.ResponseEntity<String> install = rest.exchange("/api/v1/github/install", HttpMethod.GET, bearer(token), String.class);
+        org.springframework.http.ResponseEntity<String> install = getWithoutRedirects("/api/v1/github/install", bearer(token));
         assertEquals(HttpStatus.FOUND, install.getStatusCode());
         assertTrue(install.getHeaders().getFirst(HttpHeaders.LOCATION).contains("github.com/apps/skilllink-test-app/installations/new"), "install redirect expected");
 
@@ -64,7 +63,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void invalidStateIsRejected() {
         String token = registerCandidate();
-        org.springframework.http.ResponseEntity<String> response = rest.exchange("/api/v1/github/callback?code=abc&state=tampered-state", HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
+        org.springframework.http.ResponseEntity<String> response = getWithoutRedirects("/api/v1/github/callback?code=abc&state=tampered-state", new HttpEntity<Void>(new HttpHeaders()));
         assertEquals(HttpStatus.FOUND, response.getStatusCode());
         assertTrue(response.getHeaders().getFirst(HttpHeaders.LOCATION).contains("code=GITHUB_STATE_INVALID"), "state mismatch must abort the flow");
     }
@@ -75,7 +74,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
         UUID candidateId = currentCandidateId(token);
         String state = "expired-state-value";
         states.create(candidateId, GithubOAuthStateRepository.PURPOSE_USER_AUTH, sha256Hex(state), cipher.encrypt("verifier"), "http://localhost:8080/api/v1/github/callback", Instant.now().minusSeconds(60));
-        org.springframework.http.ResponseEntity<String> response = rest.exchange("/api/v1/github/callback?code=abc&state=" + state, HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
+        org.springframework.http.ResponseEntity<String> response = getWithoutRedirects("/api/v1/github/callback?code=abc&state=" + state, new HttpEntity<Void>(new HttpHeaders()));
         assertEquals(HttpStatus.FOUND, response.getStatusCode());
         assertTrue(response.getHeaders().getFirst(HttpHeaders.LOCATION).contains("code=GITHUB_STATE_INVALID"), "expired state must abort the flow");
     }
@@ -87,7 +86,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
         completeUserAuth(token, state, "auth-code-once");
 
         when(github.exchangeCode(eq("auth-code-once"), any())).thenReturn(new GithubClient.OAuthToken("gho_second", "", Instant.now().plusSeconds(28800), null));
-        org.springframework.http.ResponseEntity<String> replay = rest.exchange("/api/v1/github/callback?code=auth-code-once&state=" + state, HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
+        org.springframework.http.ResponseEntity<String> replay = getWithoutRedirects("/api/v1/github/callback?code=auth-code-once&state=" + state, new HttpEntity<Void>(new HttpHeaders()));
         assertEquals(HttpStatus.FOUND, replay.getStatusCode());
         assertTrue(replay.getHeaders().getFirst(HttpHeaders.LOCATION).contains("code=GITHUB_STATE_INVALID"), "a consumed state must never be reused");
     }
@@ -97,7 +96,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
         String token = registerCandidate();
         String state = startUserAuth(token);
         when(github.exchangeCode(eq("bad-code"), any())).thenThrow(new GithubClient.GithubException("GITHUB_TOKEN_EXCHANGE_FAILED", "GitHub authorization could not be completed.", 502));
-        org.springframework.http.ResponseEntity<String> response = rest.exchange("/api/v1/github/callback?code=bad-code&state=" + state, HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
+        org.springframework.http.ResponseEntity<String> response = getWithoutRedirects("/api/v1/github/callback?code=bad-code&state=" + state, new HttpEntity<Void>(new HttpHeaders()));
         assertEquals(HttpStatus.FOUND, response.getStatusCode());
         assertTrue(response.getHeaders().getFirst(HttpHeaders.LOCATION).contains("code=GITHUB_TOKEN_EXCHANGE_FAILED"));
     }
@@ -106,7 +105,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     void installationStateCannotBeUsedForUserAuthorization() {
         String token = registerCandidate();
         String installState = startInstall(token);
-        org.springframework.http.ResponseEntity<String> response = rest.exchange("/api/v1/github/callback?code=abc&state=" + installState, HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
+        org.springframework.http.ResponseEntity<String> response = getWithoutRedirects("/api/v1/github/callback?code=abc&state=" + installState, new HttpEntity<Void>(new HttpHeaders()));
         assertEquals(HttpStatus.FOUND, response.getStatusCode());
         assertTrue(response.getHeaders().getFirst(HttpHeaders.LOCATION).contains("code=GITHUB_STATE_INVALID"), "install state must not complete user authorization");
     }
@@ -124,8 +123,8 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void removedInstallationStopsRepositoryListing() {
         String token = registerCandidate();
-        connectCandidate(token);
-        installations.updateStatus(42_0001L, GithubInstallationRepository.STATUS_REMOVED);
+        long installationId = connectCandidate(token);
+        installations.updateStatus(installationId, GithubInstallationRepository.STATUS_REMOVED);
         org.springframework.http.ResponseEntity<JsonNode> response = rest.exchange("/api/v1/github/repositories", HttpMethod.GET, bearer(token), JsonNode.class);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("GITHUB_INSTALLATION_REMOVED", response.getBody().path("code").asText());
@@ -135,8 +134,8 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void repositoriesListOnlyInstallationAuthorizedEntriesWithEncryptedPersistence() {
         String token = registerCandidate();
-        connectCandidate(token);
-        when(appClient.installationRepositories(42_0001L)).thenReturn(List.of(
+        long installationId = connectCandidate(token);
+        when(appClient.installationRepositories(installationId)).thenReturn(List.of(
             new GithubAppClient.InstallationRepository("7001", "foodbridge", "acme-org/foodbridge", "acme-org", true, "main", "Java", "2026-09-01T10:00:00Z", 4200, "Fixture repo"),
             new GithubAppClient.InstallationRepository("7002", "other-tool", "acme-org/other-tool", "acme-org", false, "main", "Python", "2026-09-02T10:00:00Z", 100, null)));
 
@@ -160,8 +159,8 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void githubUnauthorizedResponseSurfacesTokenInvalid() {
         String token = registerCandidate();
-        connectCandidate(token);
-        when(appClient.installationRepositories(42_0001L)).thenThrow(new GithubClient.GithubException("GITHUB_API_ERROR", "GitHub API request failed.", 401));
+        long installationId = connectCandidate(token);
+        when(appClient.installationRepositories(installationId)).thenThrow(new GithubClient.GithubException("GITHUB_API_ERROR", "GitHub API request failed.", 401));
         org.springframework.http.ResponseEntity<JsonNode> response = rest.exchange("/api/v1/github/repositories", HttpMethod.GET, bearer(token), JsonNode.class);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("GITHUB_TOKEN_INVALID", response.getBody().path("code").asText());
@@ -171,8 +170,8 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void selectionStaysExplicitAndOnlyAllowsAuthorizedRepositories() {
         String token = registerCandidate();
-        connectCandidate(token);
-        when(appClient.installationRepositories(42_0001L)).thenReturn(List.of(
+        long installationId = connectCandidate(token);
+        when(appClient.installationRepositories(installationId)).thenReturn(List.of(
             new GithubAppClient.InstallationRepository("7001", "foodbridge", "acme-org/foodbridge", "acme-org", true, "main", "Java", "2026-09-01T10:00:00Z", 4200, "Fixture repo")));
 
         org.springframework.http.ResponseEntity<JsonNode> selected = rest.exchange("/api/v1/github/repositories/7001/select", HttpMethod.POST, bearer(token), JsonNode.class);
@@ -187,11 +186,11 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void installationCannotBeLinkedToTwoCandidates() {
         String tokenA = registerCandidate();
-        connectCandidate(tokenA);
+        long installationId = connectCandidate(tokenA);
         String tokenB = registerCandidate();
         String installState = startInstall(tokenB);
-        when(appClient.installation(42_0001L)).thenReturn(new GithubAppClient.Installation(42_0001L, 5001, "acme-org", "Organization", "SELECTED"));
-        org.springframework.http.ResponseEntity<String> response = rest.exchange("/api/v1/github/install/callback?installation_id=420001&state=" + installState, HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
+        when(appClient.installation(installationId)).thenReturn(new GithubAppClient.Installation(installationId, ACCOUNT_ID, ACCOUNT_LOGIN, "Organization", "SELECTED"));
+        org.springframework.http.ResponseEntity<String> response = getWithoutRedirects("/api/v1/github/install/callback?installation_id=" + installationId + "&state=" + installState, new HttpEntity<Void>(new HttpHeaders()));
         assertEquals(HttpStatus.FOUND, response.getStatusCode());
         assertTrue(response.getHeaders().getFirst(HttpHeaders.LOCATION).contains("code=INSTALLATION_ALREADY_LINKED"), "an installation belongs to one SkillLink candidate: " + response.getHeaders().getFirst(HttpHeaders.LOCATION));
     }
@@ -199,8 +198,8 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void disconnectRevokesStopsAccessAndKeepsHistoricalProjects() {
         String token = registerCandidate();
-        connectCandidate(token);
-        when(appClient.installationRepositories(42_0001L)).thenReturn(List.of(
+        long installationId = connectCandidate(token);
+        when(appClient.installationRepositories(installationId)).thenReturn(List.of(
             new GithubAppClient.InstallationRepository("7001", "foodbridge", "acme-org/foodbridge", "acme-org", true, "main", "Java", "2026-09-01T10:00:00Z", 4200, "Fixture repo")));
         org.springframework.http.ResponseEntity<JsonNode> selected = rest.exchange("/api/v1/github/repositories/7001/select", HttpMethod.POST, bearer(token), JsonNode.class);
         assertEquals(HttpStatus.OK, selected.getStatusCode());
@@ -250,7 +249,7 @@ class GithubAppConnectionIntegrationTest extends AbstractGithubIntegrationTest {
         // Expired token with a refresh token available.
         when(github.exchangeCode(any(), any())).thenReturn(new GithubClient.OAuthToken("gho_old", "", Instant.now().minusSeconds(60), REFRESH_TOKEN));
         when(github.currentUser("gho_old")).thenReturn(new GithubClient.GithubUser(9001, "it-candidate", "It Candidate"));
-        org.springframework.http.ResponseEntity<String> callback = rest.exchange("/api/v1/github/callback?code=code-expiring&state=" + state, HttpMethod.GET, new HttpEntity<Void>(new HttpHeaders()), String.class);
+        org.springframework.http.ResponseEntity<String> callback = getWithoutRedirects("/api/v1/github/callback?code=code-expiring&state=" + state, new HttpEntity<Void>(new HttpHeaders()));
         assertEquals(HttpStatus.FOUND, callback.getStatusCode());
 
         when(github.refreshToken(REFRESH_TOKEN)).thenReturn(new GithubClient.OAuthToken("gho_refreshed", "", Instant.now().plusSeconds(28800), null));

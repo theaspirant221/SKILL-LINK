@@ -20,6 +20,10 @@ import static org.mockito.Mockito.when;
  */
 class GithubWebhookIntegrationTest extends AbstractGithubIntegrationTest {
 
+    private static String installationEvent(String action, long installationId) {
+        return "{\"action\":\"" + action + "\",\"installation\":{\"id\":" + installationId + "}}";
+    }
+
     @Test
     void missingSignatureIsRejected() {
         HttpHeaders headers = new HttpHeaders();
@@ -40,12 +44,12 @@ class GithubWebhookIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void validInstallationDeletedSignatureMarksInstallationRemoved() {
         String token = registerCandidate();
-        connectCandidate(token);
+        long installationId = connectCandidate(token);
         assertEquals(GithubDtos.STATUS_CONNECTED, status(token).status());
 
         String delivery = UUID.randomUUID().toString();
         org.springframework.http.ResponseEntity<JsonNode> response = postWebhook("installation", delivery,
-            "{\"action\":\"deleted\",\"installation\":{\"id\":420001}}", webhookSecret);
+            installationEvent("deleted", installationId), webhookSecret);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("processed", response.getBody().path("status").asText());
 
@@ -58,9 +62,9 @@ class GithubWebhookIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void duplicateDeliveryIsProcessedOnlyOnce() {
         String token = registerCandidate();
-        connectCandidate(token);
+        long installationId = connectCandidate(token);
         String delivery = UUID.randomUUID().toString();
-        String body = "{\"action\":\"deleted\",\"installation\":{\"id\":420001}}";
+        String body = installationEvent("deleted", installationId);
 
         org.springframework.http.ResponseEntity<JsonNode> first = postWebhook("installation", delivery, body, webhookSecret);
         assertEquals(HttpStatus.OK, first.getStatusCode());
@@ -89,14 +93,14 @@ class GithubWebhookIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void repositoryRemovedEventStopsAccessWithoutDeletingHistory() {
         String token = registerCandidate();
-        connectCandidate(token);
-        when(appClient.installationRepositories(42_0001L)).thenReturn(List.of(
+        long installationId = connectCandidate(token);
+        when(appClient.installationRepositories(installationId)).thenReturn(List.of(
             new GithubAppClient.InstallationRepository("7001", "foodbridge", "acme-org/foodbridge", "acme-org", true, "main", "Java", "2026-09-01T10:00:00Z", 4200, "Fixture repo")));
         org.springframework.http.ResponseEntity<JsonNode> selected = rest.exchange("/api/v1/github/repositories/7001/select", HttpMethod.POST, bearer(token), JsonNode.class);
         assertEquals(HttpStatus.OK, selected.getStatusCode());
 
         org.springframework.http.ResponseEntity<JsonNode> response = postWebhook("installation_repositories", UUID.randomUUID().toString(),
-            "{\"action\":\"removed\",\"installation\":{\"id\":420001},\"repositories_removed\":[{\"full_name\":\"acme-org/foodbridge\"}]}", webhookSecret);
+            "{\"action\":\"removed\",\"installation\":{\"id\":" + installationId + "},\"repositories_removed\":[{\"full_name\":\"acme-org/foodbridge\"}]}", webhookSecret);
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
         String accessStatus = jdbc.queryForObject("SELECT connection_status FROM repository WHERE external_id = '7001'", String.class);
@@ -108,15 +112,15 @@ class GithubWebhookIntegrationTest extends AbstractGithubIntegrationTest {
     @Test
     void installationSuspendAndUnsuspendAreTracked() {
         String token = registerCandidate();
-        connectCandidate(token);
+        long installationId = connectCandidate(token);
 
         org.springframework.http.ResponseEntity<JsonNode> suspended = postWebhook("installation", UUID.randomUUID().toString(),
-            "{\"action\":\"suspend\",\"installation\":{\"id\":420001}}", webhookSecret);
+            installationEvent("suspend", installationId), webhookSecret);
         assertEquals(HttpStatus.OK, suspended.getStatusCode());
         assertEquals(GithubDtos.STATUS_INSTALLATION_REMOVED, status(token).status());
 
         org.springframework.http.ResponseEntity<JsonNode> unsuspended = postWebhook("installation", UUID.randomUUID().toString(),
-            "{\"action\":\"unsuspend\",\"installation\":{\"id\":420001}}", webhookSecret);
+            installationEvent("unsuspend", installationId), webhookSecret);
         assertEquals(HttpStatus.OK, unsuspended.getStatusCode());
         assertEquals(GithubDtos.STATUS_CONNECTED, status(token).status());
     }
