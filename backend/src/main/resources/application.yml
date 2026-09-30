@@ -74,5 +74,12 @@ skilllink:
     max-repository-bytes: ${ANALYSIS_MAX_REPOSITORY_BYTES:5000000}
     max-context-files: ${ANALYSIS_MAX_CONTEXT_FILES:80}
     max-tree-entries: ${ANALYSIS_MAX_TREE_ENTRIES:5000}
+  snapshot:
+    max-file-bytes: ${SNAPSHOT_MAX_FILE_BYTES:500000}
+    max-repository-bytes: ${SNAPSHOT_MAX_REPOSITORY_BYTES:20000000}
+    max-files: ${SNAPSHOT_MAX_FILES:1000}
+    max-tree-entries: ${SNAPSHOT_MAX_TREE_ENTRIES:10000}
+    max-depth: ${SNAPSHOT_MAX_DEPTH:20}
+    file-policy-version: ${SNAPSHOT_FILE_POLICY_VERSION:v1}
   privacy:
     retention-days: ${PRIVACY_RETENTION_DAYS:180}

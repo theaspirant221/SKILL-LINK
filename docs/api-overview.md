@@ -40,7 +40,11 @@ The GitHub App installation and the user authorization are separate concepts: th
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | GET | `/projects` | candidate-owned selected projects |
-| POST | `/projects/{projectId}/analysis` | queue an async commit snapshot analysis |
+| POST | `/projects/{projectId}/snapshots` | create immutable repository snapshot at exact commit SHA (server resolves HEAD, validates installation access, applies file policy, secret filtering, manifest, integrity hash) |
+| GET | `/projects/{projectId}/snapshots` | list immutable snapshots for a project (multiple SHAs over time) |
+| GET | `/projects/{projectId}/snapshots/{snapshotId}` | snapshot metadata + file manifest + integrity summary |
+| GET | `/projects/{projectId}/snapshots/{snapshotId}/files` | file manifest entries (path, language, size, hash, inclusion, exclusion reason, secret redaction) |
+| POST | `/projects/{projectId}/analysis` | queue an async commit snapshot analysis (uses latest READY snapshot or creates one) |
 | GET | `/projects/{projectId}/analysis/{jobId}` | persisted job state/progress/error |
 | POST | `/projects/{projectId}/analysis/{jobId}/retry` | retry only a failed job |
 | GET | `/projects/{projectId}/evidence` | snapshot/source-backed evidence DTOs |

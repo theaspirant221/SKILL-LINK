@@ -107,4 +107,46 @@ describe('candidate API client', () => {
       expect(failure.message).toBe('You already have an application for this job.');
     }
   });
+
+  it('creates an immutable snapshot at an exact commit SHA', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({
+      snapshotId: 'snap-1',
+      commitSha: 'abc123def456abc123def456abc123def456abcd',
+      shortSha: 'abc123d',
+      branchName: 'main',
+      status: 'READY',
+      fullName: 'acme-org/foodbridge',
+      fileCount: 2,
+      includedFileCount: 2,
+      excludedFileCount: 0,
+      totalBytes: 1000,
+      integrityHash: 'hash123',
+      createdAt: '2026-09-30T00:00:00Z',
+      updatedAt: '2026-09-30T00:00:00Z'
+    }));
+    const snapshot = await api.snapshots.create('project-1', 'main');
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/projects/project-1/snapshots');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ branch: 'main' });
+    expect(snapshot.commitSha).toBe('abc123def456abc123def456abc123def456abcd');
+    expect(snapshot.status).toBe('READY');
+  });
+
+  it('lists snapshots and loads manifest with integrity hash', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse([{ snapshotId: 'snap-1', status: 'READY' }]));
+    await api.snapshots.list('project-1');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/projects/project-1/snapshots');
+
+    fetchMock.mockResolvedValueOnce(jsonResponse({
+      snapshot: { snapshotId: 'snap-1', commitSha: 'abc123', integrityHash: 'hash123', status: 'READY' },
+      files: [{ path: 'src/App.java', included: true, contentHash: 'hash1' }],
+      summary: { totalFiles: 1, includedFiles: 1, integrityHash: 'hash123' }
+    }));
+    const detail = await api.snapshots.get('project-1', 'snap-1');
+    const [url] = fetchMock.mock.calls[1];
+    expect(url).toBe('/api/v1/projects/project-1/snapshots/snap-1');
+    expect(detail.snapshot.integrityHash).toBe('hash123');
+    expect(detail.files[0].path).toBe('src/App.java');
+  });
 });
